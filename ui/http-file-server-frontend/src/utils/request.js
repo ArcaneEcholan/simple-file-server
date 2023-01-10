@@ -7,7 +7,7 @@ import { getToken } from '@/utils/auth'
 const service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API, // url = base url + request url
   // withCredentials: true, // send cookies when cross-domain requests
-  timeout: 5000 // request timeout
+  timeout: 0 // request timeout
 })
 
 // request interceptor
@@ -45,9 +45,13 @@ service.interceptors.response.use(
   response => {
     const res = response.data
 
-    if (res.code === 'FRONT_END_PARAMS_ERROR') {
-      Message.error('front end param error')
-      return Promise.reject()
+    if (res.code === 'NO_CONFIG_KEY') {
+      return res
+    }
+
+    if (res.code !== 'SUCCESS') {
+      console.log(res)
+      return Promise.reject(res)
     }
 
     return res

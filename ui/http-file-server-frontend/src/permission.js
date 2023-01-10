@@ -1,4 +1,4 @@
-import router from './router'
+import router, { asyncRoutes, resetRouter } from './router'
 import store from './store'
 import { Message } from 'element-ui'
 import NProgress from 'nprogress' // progress bar
@@ -11,20 +11,39 @@ NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
 const whiteList = ['/login', '/auth-redirect'] // no redirect whitelist
 
+let user_info
+
+function need_build_routes() {
+  if (user_info) {
+    return false
+  } else {
+    return true
+  }
+}
+function fetch_user_info() {
+  user_info = {}
+}
+
 router.beforeEach(async(to, from, next) => {
   // start progress bar
   NProgress.start()
 
   // set page title
   document.title = getPageTitle(to.meta.title)
-  console.log(to.path)
-  // next()
-  console.log(to)
-  console.log(next)
-  console.log(router.options)
-  if (to.path == '/filelist') {
-    next({ path: '/' })
-    NProgress.done()
+
+  if (need_build_routes()) {
+    fetch_user_info()
+    resetRouter()
+
+    store.commit('permission/SET_ROUTES', asyncRoutes)
+
+    router.addRoutes(asyncRoutes)
+  }
+
+  if (to.matched.length === 0) {
+    next({ path: to.path })
+  } else {
+    next()
   }
 
   // determine whether the user has logged in

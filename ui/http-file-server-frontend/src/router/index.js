@@ -85,9 +85,33 @@ export const constantRoutes = [
     ]
   },
   {
+    path: '/disk',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/disk/disk.vue'),
+        name: 'Disk',
+        meta: { title: 'Disk' }
+      }
+    ]
+  },
+  {
+    path: '/config',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/config/general.vue'),
+        name: 'Config',
+        meta: { title: 'Config', affix: true }
+      }
+    ]
+  },
+  {
     path: '/',
     component: Layout,
-    redirect: '/dashboard',
+    redirect: '/filelist',
     children: [
       {
         path: 'dashboard',

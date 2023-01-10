@@ -1,12 +1,20 @@
 <template lang="">
   <div style="margin: 50px 40px">
-    <div class="flex justify-between" style="padding: 20px 0px;border: 1px solid;  ">
+
+    <!-- back btn -->
+    <div>
+      <el-button @click="goback()">back</el-button>
+    </div>
+    <!-- top tool bar -->
+    <div class="flex justify-between" style="padding: 20px 0px;  ">
+      <!-- page path -->
       <div>
         <span style="font-size: 30px;  ">{{ path }}</span>
       </div>
+      <!-- upload btn -->
       <div>
         <input id="upload_file" type="file" style="display: none" name="myfile" @change="do_upload_file">
-        <el-button @click="open_upload_file()">upload</el-button>
+        <el-button type="primary" @click="open_upload_file()">upload</el-button>
       </div>
     </div>
     <div>
@@ -35,82 +43,154 @@
 <script>
 import readableDisplay from '@/views/common/readable-display.vue'
 import * as file_api from '@/api/file.js'
+import * as config_api from '@/api/config.js'
+import { Message } from 'element-ui'
 export default {
   components: {
     readableDisplay
   },
   data() {
     return {
+      /**
+       * relative path to root( root is configured on the backend, it's transparent to frontend)
+       */
       path: this.$route.query.path == null ? '/' : this.$route.query.path,
+      /**
+       * file list
+       */
       filelist: [
-        {
-          name: 'hello.txt',
-          length: 324343,
-          type: 1
-        },
-        {
-          name: 'dir',
-          length: 6827384682,
-          type: 0
-        }
+        // {
+        //   name: 'hello.txt',
+        //   length: 324343,
+        //   type: 1
+        // },
+        // {
+        //   name: 'dir',
+        //   length: 6827384682,
+        //   type: 0
+        // }
       ]
     }
   },
   watch: {
-    // 监听路由发生改变
+    /**
+     * handle changes when re-entering the page, mainly to obtain new paths
+     */
     $route: {
       handler(new_route) {
-        console.log(new_route)
         this.path = new_route.query.path
-        if (this.path == null) {
-          this.path = '/'
-        }
-        file_api.getFileList({
-          path: this.path
-        }).then(resp => {
-          this.filelist = resp.data
-        })
+        this.fetch_file_list()
       }
     }
   },
+
   created() {
-    console.log(this.path)
-    if (this.path == null) {
-      this.path = '/'
-    }
-    file_api.getFileList({
-      path: this.path
-    }).then(resp => {
-      this.filelist = resp.data
-    })
+    this.fetch_file_list()
   },
   methods: {
+    /**
+     * fetch all files in "this.path" dir
+     */
+    fetch_file_list() {
+      // '/' is the default value of this.path
+      if (this.path == null) {
+        this.path = '/'
+      }
+
+      file_api.getFileList({
+        path: this.path
+      }).then(resp => {
+        this.filelist = resp.data
+      }).catch(resp => {
+        if (resp.code === 'NO_FILE') {
+          Message.warning('File Not Found, please configure the correct root path')
+          return
+        }
+      })
+    },
+    /**
+     * go to parent path, equals to "cd ../"
+     */
+    goback() {
+      // already root, do nothing
+      if (this.path === '/') {
+        return
+      }
+
+      const lastSplash = this.path.lastIndexOf('/')
+      if (lastSplash === -1) {
+        throw new Error('path error')
+      }
+
+      let parent_path = this.path.substring(0, lastSplash)
+
+      if (parent_path === '') {
+        parent_path = '/'
+      }
+
+      console.log(parent_path)
+
+      this.$router.push({ path: '/filelist', query: { path: parent_path }})
+    },
     do_upload_file() {
       const upload_elem = document.getElementById('upload_file')
 
       const files = upload_elem.files
-      const form = new FormData()
-      form.append('file-body', files[0])
-      form.append(
-        'file-info',
-        new Blob(
-          [
-            JSON.stringify({
-              path: this.path
-            })
-          ],
-          {
-            type: 'application/json'
-          }
+      const file = files[0]
+
+      // check file size
+      // fetch file size limit first
+      config_api.getConfigValue('max-upload-size').then(resp => {
+        const limit_size = resp.data
+        const filesize = file.size
+        // file size exceeds the limit
+        if (filesize > limit_size * 1024 * 1024) {
+          upload_elem.value = ''
+          Message.warning('Exceed upload limit: ' + limit_size + 'M')
+          return
+        }
+
+        // do upload
+        const form = new FormData()
+        form.append('file-body', file)
+        form.append(
+          'file-info',
+          new Blob(
+            [
+              JSON.stringify({
+                path: this.path
+              })
+            ],
+            {
+              type: 'application/json'
+            }
+          )
         )
-      )
 
-      file_api.upload(form).then((resp) => {
-        console.log(resp)
+        file_api.upload(form).then((resp) => {
+          console.log(resp)
+        }).then((resp) => {
+          Message.success('upload successfully')
+          file_api.getFileList({
+            path: this.path
+          }).then(resp => {
+            this.filelist = resp.data
+          })
+        }).catch(resp => {
+          const code = resp.code
+          if (code === 'FILE_ACCESS_DENIED') {
+            Message.error('FILE_ACCESS_DENIED')
+          }
+        })
+
+        upload_elem.value = ''
+      }).catch((resp) => {
+        if (resp.code === 'CONFIG_FILE_NOT_FOUND') {
+          this.config_file_not_found_prompt = true
+        }
       })
-
-      upload_elem.value = ''
     },
+    // open upload file dialog
     open_upload_file() {
       document.getElementById('upload_file').click()
     },
