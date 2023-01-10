@@ -32,7 +32,7 @@ public class DiskAnalyzingContext {
 
 
     public synchronized void startAnalyzing() {
-        if(this.doingDiskAnalyzing) {
+        if (this.doingDiskAnalyzing) {
             throw new RuntimeException("analyzing");
         }
         this.doingDiskAnalyzing = true;
@@ -81,18 +81,19 @@ public class DiskAnalyzingContext {
         return isFile(f);
     }
 
+    private boolean scanFileWithPrefix(String path) {
+        return !path.startsWith("/proc")
+                && !path.startsWith("/dev")
+                && !path.startsWith("/sys");
+    }
+
     private DirInfo scan(File targetDir) throws IOException {
-        if(interfere) {
+        if (interfere) {
             throw new RuntimeException("interfere scanning");
         }
         File[] files = null;
         ;
-        if (targetDir.getAbsolutePath()
-                     .startsWith("/proc")
-                || targetDir.getAbsolutePath()
-                            .startsWith("/dev")
-                || targetDir.getAbsolutePath()
-                            .startsWith("/sys")
+        if (!scanFileWithPrefix(targetDir.getAbsolutePath())
                 || isFile(targetDir)
                 || (files = targetDir.listFiles()) == null
         ) {
