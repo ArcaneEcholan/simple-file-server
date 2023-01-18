@@ -1,6 +1,7 @@
 package fit.wenchao.http_file_server;
 
 import fit.wenchao.http_file_server.constants.CommonConsts;
+import fit.wenchao.http_file_server.utils.FilePathBuilder;
 import org.apache.tomcat.util.modeler.ParameterInfo;
 import org.springframework.stereotype.Component;
 
@@ -20,10 +21,12 @@ import static fit.wenchao.http_file_server.utils.StrUtils.filePathBuilder;
 public class ConfigFile {
 
     // path = java running path + config file name
-    private static String configFilePath = filePathBuilder().ct(SystemProperty.getSingleton()
-                                                                              .getCurDir())
-                                                            .ct(CommonConsts.CONFIG_FILE_NAME)
-                                                            .build();
+    private static String configFilePath =
+            FilePathBuilder.ofPath()
+                           .ct(SystemProperty.getSingleton()
+                                            .getCurDir())
+                           .ct(CommonConsts.CONFIG_FILE_NAME)
+                           .build();
 
     public String getConfigFilePath() {
         return configFilePath;
@@ -55,6 +58,7 @@ public class ConfigFile {
 
     /**
      * List all configurations in the config file.
+     *
      * @return A map containing all configs.Empty map if there is nothing in
      * the config file.
      */

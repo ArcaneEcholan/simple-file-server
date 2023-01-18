@@ -3,6 +3,10 @@ import java.io.File;
 
 public class StrUtils {
 
+    public static void main(String[] args) {
+
+    }
+
     public static String ft(String format, Object... args) {
         return new StringFormatter().formatString(format, args);
     }

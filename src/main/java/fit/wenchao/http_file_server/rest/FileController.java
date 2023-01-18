@@ -1,5 +1,6 @@
 package fit.wenchao.http_file_server.rest;
 
+import fit.wenchao.http_file_server.ConfigFile;
 import fit.wenchao.http_file_server.SystemProperty;
 import fit.wenchao.http_file_server.constants.FileType;
 import fit.wenchao.http_file_server.constants.RespCode;
@@ -7,8 +8,10 @@ import fit.wenchao.http_file_server.exception.BackendException;
 import fit.wenchao.http_file_server.model.JsonResult;
 import fit.wenchao.http_file_server.model.vo.FileInfo;
 import fit.wenchao.http_file_server.model.vo.UploadFileInfo;
+import fit.wenchao.http_file_server.utils.FilePathBuilder;
 import fit.wenchao.http_file_server.utils.ResponseEntityUtils;
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -36,14 +39,33 @@ import static org.springframework.http.HttpHeaders.CONTENT_LENGTH;
 @RestController
 public class FileController {
 
+    public static void main(String[] args) {
+        System.out.println();
+    }
+
+    @Autowired
+    ConfigFile configFile;
+
+    public String getRootPath() {
+        String root = configFile.getProp("root");
+        if (root == null || "".equals(root)) {
+            root = System.getProperty("user.home");
+        }
+
+        return root;
+    }
+
     @GetMapping("/file-list")
     public ResponseEntity<JsonResult> getFileList(@NotBlank String path) {
 
-        path = filePathBuilder()
-                .ct(SystemProperty.getSingleton()
-                                  .getCurDir())
-                .ct(path)
-                .build();
+        String rootPath = getRootPath();
+        if (rootPath == null) {
+            throw new BackendException(rootPath, RespCode.ROOT_PATH_CONFIG_ERROR);
+        }
+        path = FilePathBuilder.ofPath()
+                              .ct(rootPath)
+                              .ct(path)
+                              .build();
 
         File file = new File(path);
 
@@ -84,11 +106,14 @@ public class FileController {
     public ResponseEntity<StreamingResponseBody> downloadFile(
             String path) throws UnsupportedEncodingException {
 
-        path = filePathBuilder()
-                .ct(SystemProperty.getSingleton()
-                                  .getCurDir())
-                .ct(path)
-                .build();
+        String rootPath = getRootPath();
+        if (rootPath == null) {
+            throw new BackendException(rootPath, RespCode.ROOT_PATH_CONFIG_ERROR);
+        }
+        path = FilePathBuilder.ofPath()
+                              .ct(rootPath)
+                              .ct(path)
+                              .build();
 
         File file = new File(path);
 
@@ -135,31 +160,52 @@ public class FileController {
             @RequestPart("file-info") @Validated UploadFileInfo uploadFileInfo
     ) throws Exception {
 
+        // check if the size of upload file is valid
+        long size = multipartFile.getSize();
+        String maxSizeValue = configFile.getProp("max-upload-size");
+        if(maxSizeValue != null && !maxSizeValue.equals("")) {
+            long maxSize = Long.parseLong(maxSizeValue);
+            maxSize *= 1024;
+            maxSize *= 1024;
+            if (size > maxSize) {
+                throw new BackendException(null,
+                        RespCode.UPLOAD_FILE_SIZE_EXCEED_UPPER_LIMIT);
+            }
+        } else {
+            // config is not present, set default max size value, it can not
+            // exceed configuration in application.yml
+            long maxSize = 1024L * 1024 * 1024 * 2;
+            if (size > maxSize) {
+                throw new BackendException(null,
+                        RespCode.UPLOAD_FILE_SIZE_EXCEED_UPPER_LIMIT);
+            }
+        }
+
+        // file must have a name
         String filename = multipartFile.getOriginalFilename();
         if (filename == null) {
             throw new BackendException(null, RespCode.FILE_UPLOAD_ERROR);
         }
 
-
-
+        // this is relative upload path
         String path = uploadFileInfo.getPath();
 
-        path = filePathBuilder()
-                .ct(SystemProperty.getSingleton()
-                                  .getCurDir())
-                .ct(path)
-                .build();
+        // build the absolute path
+        String rootPath = getRootPath();
+        path = FilePathBuilder.ofPath()
+                              .ct(rootPath)
+                              .ct(path)
+                              .build();
 
-        File file = new File(path);
 
-        if (file.isFile()) {
+        File uploadDir = new File(path);
+        if (uploadDir.isFile()) {
             throw new BackendException(path, RespCode.UPLOAD_DEST_ERROR);
         }
 
         Path uploadPath = Paths.get(path);
 
-
-        // make upload dir
+        // make upload dir if not exists
         if (!Files.exists(uploadPath)) {
             try {
                 Files.createDirectories(uploadPath);

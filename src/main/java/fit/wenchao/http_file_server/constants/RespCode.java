@@ -19,9 +19,10 @@ public enum RespCode {
     DOWNLOAD_NOT_SUPPORT("", "file does not support download operation"),
     UPLOAD_DEST_ERROR("", "upload destination can only be dir"),
     FILE_ACCESS_DENIED("", "file access denied"), FILE_UPLOAD_ERROR("", "upload file error"),
-    CONFIG_FILE_NOT_FOUND("", "config file not found");
-
-
+    CONFIG_FILE_NOT_FOUND("", "config file not found"), NO_CONFIG_KEY("", "no config key"),
+    ROOT_PATH_CONFIG_ERROR("","root path config error" ),
+    MAX_UPLOAD_SIZE_TOO_LARGE("", "max upload size should less then 2G"),
+    DISK_SCAN_ERROR("", "disk scan error"), FILE_TYPE_ERROR("", "file type error");
 
 
     @Deprecated
