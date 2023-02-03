@@ -19,14 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class WebSocketServer {
 
-
-    static long count = 0;
-    static long size = 0;
-
-    static long dirCount = 0;
-
-    static Map<String, DirInfo> map = new HashMap<>();
-
     private static boolean isSymbolicLink(File f) throws IOException {
         return !f.getAbsolutePath()
                  .equals(f.getCanonicalPath());
@@ -35,63 +27,6 @@ public class WebSocketServer {
     public static boolean isFile(File f) throws IOException {
         return isSymbolicLink(f) || f.isFile();
     }
-
-    public static boolean isDirectory(File f) throws IOException {
-        return isFile(f);
-    }
-
-    public static DirInfo scan(File targetDir) throws IOException {
-        File[] files = null;
-        ;
-        if (targetDir.getAbsolutePath()
-                     .startsWith("/proc")
-                || targetDir.getAbsolutePath()
-                            .startsWith("/dev")
-                || targetDir.getAbsolutePath()
-                            .startsWith("/sys")
-                || isFile(targetDir)
-                || (files = targetDir.listFiles()) == null
-        ) {
-            return null;
-        }
-
-
-        DirInfo dirInfo = new DirInfo();
-        long curDirSize = 0;
-        long fileSize = 0;
-        for (File item : files) {
-
-            if (isFile(item)) {
-
-                long length = item.length();
-
-                curDirSize += length;
-                fileSize++;
-
-                continue;
-            }
-
-            dirCount++;
-
-            DirInfo nestDirInfo = scan(item);
-            if (nestDirInfo != null) {
-                map.put(item.getAbsolutePath(), nestDirInfo);
-                long nestDirSize = nestDirInfo.getLength();
-                long nestFileSize = nestDirInfo.getNumberOfFiles();
-                curDirSize += nestDirSize;
-                fileSize += nestFileSize;
-            }
-        }
-
-        dirInfo.setLength(curDirSize);
-        dirInfo.setNumberOfFiles(fileSize);
-        return dirInfo;
-    }
-
-    static long before = 0;
-    static long after = 0;
-
-
 
     static DiskAnalyzingContext diskAnalyzingContext;
 

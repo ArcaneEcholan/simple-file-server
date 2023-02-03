@@ -81,7 +81,7 @@ public class DiskAnalyzingContext {
         return isFile(f);
     }
 
-    private boolean scanFileWithPrefix(String path) {
+    public boolean scanFileWithPrefix(String path) {
         return !path.startsWith("/proc")
                 && !path.startsWith("/dev")
                 && !path.startsWith("/sys");

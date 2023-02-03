@@ -1,6 +1,7 @@
 package fit.wenchao.http_file_server.rest;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import fit.wenchao.http_file_server.constants.FileType;
 import fit.wenchao.http_file_server.constants.RespCode;
@@ -14,6 +15,7 @@ import fit.wenchao.http_file_server.wss.DirInfo;
 import fit.wenchao.http_file_server.wss.DiskAnalyzingContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.jackson.JsonObjectDeserializer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +39,10 @@ public class DiskAnalyzingController {
 
     @GetMapping("scan")
     public ResponseEntity<JsonResult> scan(@NotBlank @Validated String path) throws IOException {
+        if (!diskAnalyzingContext.scanFileWithPrefix(path)) {
+            throw new BackendException(null, RespCode.DIR_ANALYZE_NOT_SUPPORT);
+        }
+
         if (!diskAnalyzingContext.analyzing()) {
             throw new BackendException(null, RespCode.DISK_SCAN_ERROR);
         }
@@ -68,12 +74,22 @@ public class DiskAnalyzingController {
             throw new BackendException(null, RespCode.FILE_TYPE_ERROR);
         }
 
+        if (!diskAnalyzingContext.scanFileWithPrefix(path)) {
+            throw new BackendException(null, RespCode.DIR_ANALYZE_NOT_SUPPORT);
+        }
+
         File[] files = file.listFiles();
         if (files == null) {
             return ResponseEntityUtils.ok(JsonResult.ok(new ArrayList<>()));
         }
 
         List<FileInfo> dirInfos = new ArrayList<>();
+
+        DirInfo curDirInfo = diskAnalyzingContext.getResult(path);
+        if (curDirInfo != null) {
+            curDirInfo.setName(file.getName());
+            curDirInfo.setPath(file.getAbsolutePath());
+        }
 
         for (File item : files) {
 
@@ -101,7 +117,10 @@ public class DiskAnalyzingController {
 
         }
 
-        return ResponseEntityUtils.ok(JsonResult.ok(dirInfos));
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("files", dirInfos);
+        jsonObject.put("curDirInfo", curDirInfo);
+        return ResponseEntityUtils.ok(JsonResult.ok(jsonObject));
     }
 
     @GetMapping("/filelist")
