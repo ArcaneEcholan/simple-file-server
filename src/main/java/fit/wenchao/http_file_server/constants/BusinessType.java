@@ -1,17 +1,9 @@
 package fit.wenchao.http_file_server.constants;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
-import org.apache.logging.log4j.util.Strings;
-
-import java.util.Arrays;
-
 public class BusinessType {
 
 
+    public static final BusinessType TOO_CROWD = new BusinessType("too crowd");
     String value;
 
     public String getValue() {

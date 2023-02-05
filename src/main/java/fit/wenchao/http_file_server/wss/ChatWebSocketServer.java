@@ -1,11 +1,11 @@
 package fit.wenchao.http_file_server.wss;
 
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import fit.wenchao.http_file_server.constants.BusinessType;
 import fit.wenchao.http_file_server.constants.ContentType;
 import fit.wenchao.http_file_server.model.chat.Message;
 import fit.wenchao.http_file_server.model.chat.User;
-import fit.wenchao.http_file_server.utils.IpUtil;
 import fit.wenchao.http_file_server.utils.WebsocketUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,12 +13,13 @@ import org.springframework.stereotype.Component;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
-import java.net.*;
-import java.util.Enumeration;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+
+import static fit.wenchao.http_file_server.utils.json.Json.json;
+import static fit.wenchao.http_file_server.utils.json.Pair.pair;
 
 
 @Slf4j
@@ -28,6 +29,11 @@ import java.util.stream.Collectors;
 @Component
 public class ChatWebSocketServer {
 
+    public static void main(String[] args) {
+        System.out.println(JSONObject.toJSONString(json(pair("you",
+                new User()))));
+    }
+
     /**
      * 用来记录当前在线连接数。应该把它设计成线程安全的。
      */
@@ -35,6 +41,8 @@ public class ChatWebSocketServer {
     /**
      * concurrent包的线程安全Set，用来存放每个客户端对应的MyWebSocket对象。
      */
+
+    private static Rooms rooms = new Rooms();
     private static ConcurrentHashMap<String, ChatWebSocketServer> webSocketMap = new ConcurrentHashMap<>();
     /**
      * 与某个客户端的连接会话，需要通过它来给客户端发送数据
@@ -52,6 +60,13 @@ public class ChatWebSocketServer {
         return user;
     }
 
+    public String getUserId() {
+        return userId;
+    }
+
+    public String getIp() {
+        return ip;
+    }
 
     /**
      * 连接建立成功调用的方法
@@ -63,42 +78,30 @@ public class ChatWebSocketServer {
         System.out.println(remoteAddress.getAddress().getHostAddress());
         String ip = remoteAddress.getAddress().getHostAddress();
 
-        if ("127.0.0.1".equals(ip)) {
-            Inet4Address localIp4Address = IpUtil.getLocalIp4Address();
-            if (localIp4Address != null) {
-                ip = localIp4Address.getHostAddress();
-            }
-            else {
-                throw new RuntimeException("get ip failed");
-            }
-        }
+        this.user = new User(UUID.randomUUID().toString(), ip, pickAName(), 0);
 
-        System.out.println(ip);
         this.session = session;
         this.ip = ip;
-        this.user = new User(UUID.randomUUID().toString(), ip, "hello", 0);
+        this.userId = user.getId();
+        log.debug("user: <{}> online, room: <{}>", this.user.getName(),
+                this.user.getIp());
 
-        synchronized (this) {
-            if (webSocketMap.containsKey(ip)) {
-                webSocketMap.remove(ip);
-                webSocketMap.put(ip, this);
-                //加入set中
-            }
-            else {
-                webSocketMap.put(ip, this);
-                //加入set中
-                addOnlineCount();
-                //在线数加1
-            }
-        }
+        rooms.joinNewUser(this, () -> {
+            sendBack(null, BusinessType.TOO_CROWD, null);
+        });
+        addOnlineCount();
 
+        JSONObject userOnlineResp =
+                json(
+                        pair("you", this.user),
+                        pair("onlineUsers", usersInRoom(ip))
 
-        System.out.println("用户连接:" + ip + ",当前在线人数为:" + getOnlineCount());
-        List<User> onlineUserList = getOnlineUsers();
+                );
+
         try {
             sendBack(ContentType.OBJECT,
                     BusinessType.GetOnlineUsersResponse,
-                    onlineUserList);
+                    userOnlineResp);
         }
         catch (IOException e) {
             System.out.println("用户:" + userId + ",网络异常!!!!!!");
@@ -106,44 +109,30 @@ public class ChatWebSocketServer {
 
         Message message = new Message();
         message.setBusiness(BusinessType.UserOnline.toString());
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("ip", ip);
-        message.setContent(jsonObject);
-        sendMessages2All(message);
-        //String json = JSONObject.toJSONString(message);
-        //Enumeration<String> keys = webSocketMap.keys();
-        //while (keys.hasMoreElements()) {
-        //    String curIp = keys.nextElement();
-        //    ChatWebSocketServer chatWebSocketServer = webSocketMap.get(curIp);
-        //    if (chatWebSocketServer != null) {
-        //        if (!chatWebSocketServer.ip.equals(ip)) {
-        //            try {
-        //                chatWebSocketServer.session.getBasicRemote()
-        //                                           .sendText(json);
-        //            }
-        //            catch (IOException e) {
-        //                e.printStackTrace();
-        //            }
-        //        }
-        //    }
-        //}
+        userOnlineResp = json(pair("ip", ip),
+                pair("id", this.user.getId()));
+        message.setContent(userOnlineResp);
+        sendMessages2All(message, ip);
+
     }
 
-    private List<User> getOnlineUsers() {
+    private synchronized String pickAName() {
+        return rooms.getANameFromRoom(ip);
+    }
 
-        return webSocketMap.values()
-                           .stream()
-                           .map((socketServer) -> {
-                               User user1 = socketServer.getUser();
-                               if (ip.equals(user1.getIp())) {
-                                   user1.setIfThisDev(1);
-                               }
-                               else {
-                                   user1.setIfThisDev(0);
-                               }
-                               return user1;
-                           })
-                           .collect(Collectors.toList());
+    private boolean oneInThisRoomAlreadyHasThisName(String simpleName) {
+        List<User> users = rooms.usersInRoom(ip);
+        for (User user : users) {
+            if (user.getName().equals(simpleName)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private List<User> usersInRoom(String ip) {
+        return rooms.usersInRoom(ip);
     }
 
     /**
@@ -152,21 +141,20 @@ public class ChatWebSocketServer {
     @OnClose
     public void onClose() {
         log.info("onClose");
-        synchronized (this) {
-            if (webSocketMap.containsKey(ip)) {
-                webSocketMap.remove(ip);
-                subOnlineCount();
-            }
-        }
+        rooms.oneLeaveRoom(ip, this.getUserId());
+        //synchronized (this) {
+        //    if (webSocketMap.containsKey(ip)) {
+        //        webSocketMap.remove(ip);
+        //        subOnlineCount();
+        //    }
+        //}
 
         Message message = new Message();
         message.setBusiness(BusinessType.UserOffline.toString());
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("ip", ip);
-        message.setContent(jsonObject);
-        sendMessages2All(message);
+        message.setContent(json(pair("id", this.user.getId())));
+        sendMessages2All(message, ip);
 
-        System.out.println("用户退出:" + userId + ",当前在线人数为:" + getOnlineCount());
+        System.out.println("用户退出:" + this.user.getId() + ",当前在线人数为:" + getOnlineCount());
     }
 
     ///**
@@ -175,7 +163,7 @@ public class ChatWebSocketServer {
     // * @param message 客户端发送过来的消息*/
     @OnMessage
     public void onMessage(String message, Session session) throws IOException {
-        System.out.println("用户消息:" + userId + ",报文:" + message);
+        System.out.println("用户消息:" + this.user.getId() + ",报文:" + message);
         if (message == null) {
             sendBack(null, BusinessType.Exception, "params error");
             return;
@@ -189,25 +177,25 @@ public class ChatWebSocketServer {
         }
 
         String businessString = messageObject.getBusiness();
-        messageObject.setFrom(ip);
+        messageObject.setFrom(this.user.getId());
         BusinessType businessType = BusinessType.fromString(businessString);
 
         if (businessType.equals(BusinessType.SendText)) {
-            InetSocketAddress remoteAddress = WebsocketUtil.getRemoteAddress(session);
-            System.out.println(remoteAddress.getAddress().getHostAddress());
-            String ip = remoteAddress.getAddress().getHostAddress();
-
-            if ("127.0.0.1".equals(ip)) {
-                Inet4Address localIp4Address = IpUtil.getLocalIp4Address();
-                if (localIp4Address != null) {
-                    ip = localIp4Address.getHostAddress();
-                }
-                else {
-                    throw new RuntimeException("get ip failed");
-                }
-            }
-            messageObject.setFrom(ip);
-            sendMessage(messageObject);
+            //InetSocketAddress remoteAddress = WebsocketUtil.getRemoteAddress(session);
+            //System.out.println(remoteAddress.getAddress().getHostAddress());
+            //String ip = remoteAddress.getAddress().getHostAddress();
+            //
+            //if ("127.0.0.1".equals(ip)) {
+            //    Inet4Address localIp4Address = IpUtil.getLocalIp4Address();
+            //    if (localIp4Address != null) {
+            //        ip = localIp4Address.getHostAddress();
+            //    }
+            //    else {
+            //        throw new RuntimeException("get ip failed");
+            //    }
+            //}
+            //messageObject.setFrom(ip);
+            sendMessage(messageObject, ip, messageObject.getTarget());
             return;
         }
 
@@ -245,48 +233,31 @@ public class ChatWebSocketServer {
         error.printStackTrace();
     }
 
-    /**
-     * 实现服务器主动推送
-     */
-    public void sendMessage(ContentType contentType,
-                            BusinessType businessType,
-                            Object data,
-                            String from,
-                            String target) throws IOException {
-        if (contentType.equals(ContentType.OBJECT)) {
-            Message message = new Message(contentType.toString(),
-                    businessType.toString(), from,
-                    target, data);
-            String json = JSONObject.toJSONString(message);
-            ChatWebSocketServer chatWebSocketServer = webSocketMap.get(target);
-            chatWebSocketServer.session.getBasicRemote().sendText(json);
-        }
-        else {
-            log.error("content type :{} not support yet", ContentType.FILE);
-        }
-    }
 
-    public void sendMessage(Message message) throws IOException {
-        String json = JSONObject.toJSONString(message);
-        ChatWebSocketServer chatWebSocketServer =
-                webSocketMap.get(message.getTarget());
-        if (chatWebSocketServer != null) {
-            chatWebSocketServer.session.getBasicRemote().sendText(json);
-        }
-    }
-
-    public void sendMessages2All(Message message) {
-        String json = JSONObject.toJSONString(message);
-        webSocketMap.values().stream().forEach((chatWebSocketServer -> {
-            try {
-                if (chatWebSocketServer != null) {
+    public void sendMessage(Message message, String ip, String id) {
+        rooms.forOneInRoom(ip, id, chatWebSocketServer -> {
+                    String json = JSONObject.toJSONString(message);
                     chatWebSocketServer.session.getBasicRemote().sendText(json);
                 }
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
+        );
+    }
+
+    public void sendMessages2All(Message message, String ip) {
+
+        String json = JSONObject.toJSONString(message);
+        rooms.foreachOneInRoom(ip, (chatWebSocketServer -> {
+            chatWebSocketServer.session.getBasicRemote().sendText(json);
         }));
+        //webSocketMap.values().stream().forEach((chatWebSocketServer -> {
+        //    try {
+        //        if (chatWebSocketServer != null) {
+        //            chatWebSocketServer.session.getBasicRemote().sendText(json);
+        //        }
+        //    }
+        //    catch (IOException e) {
+        //        e.printStackTrace();
+        //    }
+        //}));
 
     }
 
@@ -294,8 +265,8 @@ public class ChatWebSocketServer {
                          Object data) throws IOException {
         if (contentType.equals(ContentType.OBJECT)) {
             Message message = new Message(contentType.toString(), businessType.toString(), null,
-                    ip, data);
-            String json = JSONObject.toJSONString(message);
+                    null, data);
+            String json = JSONObject.toJSONString(message, SerializerFeature.DisableCircularReferenceDetect);
             this.session.getBasicRemote().sendText(json);
         }
         else {

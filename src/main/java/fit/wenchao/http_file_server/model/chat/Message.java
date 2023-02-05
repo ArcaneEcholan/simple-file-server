@@ -1,7 +1,5 @@
 package fit.wenchao.http_file_server.model.chat;
 
-import fit.wenchao.http_file_server.constants.BusinessType;
-import fit.wenchao.http_file_server.constants.ContentType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
