@@ -15,21 +15,21 @@
                         <!-- user list -->
                         <div
                             v-for="user of getOnlineUsers()"
-                            :id="`useritem-${user.ip}`"
-                            :key="user.ip"
+                            :id="`useritem-${user.id}`"
+                            :key="user.id"
                             class="useritem"
                             @click="pickChat(user)"
                         >
                             <div>
                                 <span class="pdr10">
-                                    {{ user.ip }}
+                                    {{ user.name }}
                                 </span>
                                 <sup
                                     v-if="ifUserItemHasRedDot(user)"
                                     class="little-top-red-dot"
                                 ></sup>
                                 <span
-                                    v-if="user.ifThisDev === 1"
+                                    v-if="user.ifThisDev"
                                     class="mgl10 this-dev-prompt"
                                 >
                                     (This Device)
@@ -53,7 +53,7 @@
                                 :id="msg.vueKeyBindId"
                                 :key="msg.vueKeyBindId"
                                 :class="`flex msgbox ${
-                                    msg.from === getCurChat().ip
+                                    msg.from === getCurChat().user.id
                                         ? 'other'
                                         : 'me'
                                 }`"
@@ -71,7 +71,7 @@
                                 </div>
                                 <div
                                     :class="`msg-content ${
-                                        msg.from === getCurChat().ip
+                                        msg.from === getCurChat().user.id
                                             ? 'other'
                                             : 'me'
                                     }`"
@@ -113,7 +113,7 @@
                         <div style="">
                             <div
                                 v-for="user of getOnlineUsers()"
-                                :id="`useritem-${user.ip}`"
+                                :id="`useritem-${user.id}`"
                                 :key="user.ip"
                                 class="useritem"
                                 @click="pickChat(user)"
@@ -211,6 +211,7 @@ import * as config from '@/config/config'
 import { User } from '@/model/user'
 import store from '@/store'
 import { VueWebSocket } from '@/webSocket/vueWebSocket.js'
+import { storeOperations } from '@/store/storeOperations'
 export default {
     data() {
         return {
@@ -257,7 +258,7 @@ export default {
             domElem.scrollIntoView()
         },
         ifUserItemHasRedDot(user) {
-            const chat = store.getters.chats.find((chat) => chat.ip === user.ip)
+            const chat = store.getters.chats.find((chat) => chat.user.id === user.id)
             return chat.hasNewMsgs
         },
         closeMsgsPanel() {
@@ -299,7 +300,8 @@ export default {
         },
         pickChat(user) {
             this.inputActive = true
-            const chat = store.getters.chats.find((chat) => chat.ip === user.ip)
+
+            const chat = storeOperations.findChatById(user.id)
             store.state.chat.curChat = chat
             store.getters.curChat.hasNewMsgs = false
             this.changeUserItemDivBackgroundColor2Focus(user)
@@ -307,20 +309,18 @@ export default {
             this.lastMsgScrollIntoView()
         },
         changeUserItemDivBackgroundColor2Normal(user) {
-            const ip = user.ip
-            const divId = this.getIdOfDivWithUserItemClazz(ip)
+            const divId = this.getIdOfDivWithUserItemClazz(user)
             const useritemDiv = document.getElementById(divId)
             useritemDiv.style.backgroundColor = ''
         },
-        getIdOfDivWithUserItemClazz(ip) {
-            return `useritem-${ip}`
+        getIdOfDivWithUserItemClazz(user) {
+            return `useritem-${user.id}`
         },
         changeUserItemDivBackgroundColor2Focus(user) {
             for (const onlineUser of store.getters.onlineUsers) {
-                const ip = onlineUser.ip
-                const divId = this.getIdOfDivWithUserItemClazz(ip)
+                const divId = this.getIdOfDivWithUserItemClazz(onlineUser)
                 const useritemDiv = document.getElementById(divId)
-                if (user.ip === ip) {
+                if (user.id === onlineUser.id) {
                     useritemDiv.style.backgroundColor =
                         this.useritemDivBackgroundColor('focus')
                 } else {

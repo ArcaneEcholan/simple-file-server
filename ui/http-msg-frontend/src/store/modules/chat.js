@@ -2,7 +2,8 @@
 const state = {
     onlineUsers: [],
     chats: [],
-    curChat: {}
+    curChat: {},
+    me: {}
 }
 
 const mutations = {

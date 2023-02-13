@@ -4,15 +4,16 @@ export class Chat {
     hasNewMsgs
     vueKeyBindId
     ip
+    user
+    userId
     msgs
     ifThisDev
 
-    constructor(ip, msgs, ifThisDev) {
+    constructor(user, msgs) {
         this.hasNewMsgs = false
         this.vueKeyBindId = uuidv4()
-        this.ip = ip
+        this.user = user
         this.msgs = msgs
-        this.ifThisDev = ifThisDev
     }
 
     addMsg(msg) {

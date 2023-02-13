@@ -154,7 +154,7 @@ export default {
                     this.onlineUsers = userList
                     this.chats = []
                     for (const user of userList) {
-                        this.chats.push(new Chat(user.ip, [], user.ifThisDev))
+                        this.chats.push(new Chat(user, []))
                     }
 
                     if (this.chats.length > 0) {

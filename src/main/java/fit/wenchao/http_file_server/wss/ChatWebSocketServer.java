@@ -110,7 +110,9 @@ public class ChatWebSocketServer {
         Message message = new Message();
         message.setBusiness(BusinessType.UserOnline.toString());
         userOnlineResp = json(pair("ip", ip),
-                pair("id", this.user.getId()));
+                pair("id", this.user.getId()),
+                pair("name", this.user.getName())
+                );
         message.setContent(userOnlineResp);
         sendMessages2All(message, ip);
 
@@ -181,20 +183,10 @@ public class ChatWebSocketServer {
         BusinessType businessType = BusinessType.fromString(businessString);
 
         if (businessType.equals(BusinessType.SendText)) {
-            //InetSocketAddress remoteAddress = WebsocketUtil.getRemoteAddress(session);
-            //System.out.println(remoteAddress.getAddress().getHostAddress());
-            //String ip = remoteAddress.getAddress().getHostAddress();
-            //
-            //if ("127.0.0.1".equals(ip)) {
-            //    Inet4Address localIp4Address = IpUtil.getLocalIp4Address();
-            //    if (localIp4Address != null) {
-            //        ip = localIp4Address.getHostAddress();
-            //    }
-            //    else {
-            //        throw new RuntimeException("get ip failed");
-            //    }
-            //}
-            //messageObject.setFrom(ip);
+            InetSocketAddress remoteAddress = WebsocketUtil.getRemoteAddress(session);
+            System.out.println(remoteAddress.getAddress().getHostAddress());
+            String ip = remoteAddress.getAddress().getHostAddress();
+           
             sendMessage(messageObject, ip, messageObject.getTarget());
             return;
         }
