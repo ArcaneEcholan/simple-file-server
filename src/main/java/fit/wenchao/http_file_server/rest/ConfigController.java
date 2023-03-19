@@ -8,35 +8,26 @@ import fit.wenchao.http_file_server.model.ConfigPO;
 import fit.wenchao.http_file_server.model.JsonResult;
 import fit.wenchao.http_file_server.utils.ExceptionUtils;
 import fit.wenchao.http_file_server.utils.ResponseEntityUtils;
-import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Positive;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
-
+import static fit.wenchao.http_file_server.utils.FileUtilsKt.isFile;
 
 
 @Validated
 @RestController
+@RequestMapping("/API")
 public class ConfigController {
 
 
@@ -48,6 +39,7 @@ public class ConfigController {
     public ResponseEntity<JsonResult> getConfigList() {
 
         Map<String, String> configMap = null;
+        Boolean isFile = isFile(new File("hello"));
         try {
             configMap = configFile.listConfigurations();
         }

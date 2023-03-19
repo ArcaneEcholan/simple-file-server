@@ -2,20 +2,15 @@ package fit.wenchao.http_file_server;
 
 import fit.wenchao.http_file_server.constants.CommonConsts;
 import fit.wenchao.http_file_server.utils.FilePathBuilder;
-import org.apache.tomcat.util.modeler.ParameterInfo;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static fit.wenchao.http_file_server.utils.StrUtils.filePathBuilder;
 
 @Component
 public class ConfigFile {
@@ -150,6 +145,11 @@ public class ConfigFile {
      */
     public String getProp(String key) {
         Map<String, String> configMap = listConfigurations();
+        //return null;
+        String s = configMap.get(key);
+        if (s == null) {
+            s = "";
+        }
         return configMap.get(key);
     }
 
