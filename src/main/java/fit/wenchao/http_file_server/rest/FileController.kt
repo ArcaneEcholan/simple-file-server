@@ -2,6 +2,7 @@ package fit.wenchao.http_file_server.rest
 
 import fit.wenchao.http_file_server.ConfigFile
 import fit.wenchao.http_file_server.constants.*
+import fit.wenchao.http_file_server.eventListener.AEvent
 import fit.wenchao.http_file_server.exception.BackendException
 import fit.wenchao.http_file_server.model.JsonResult
 import fit.wenchao.http_file_server.model.vo.FileInfo
@@ -12,6 +13,7 @@ import fit.wenchao.http_file_server.utils.iflet
 import fit.wenchao.http_file_server.utils.lastModifiedTime
 import org.apache.commons.io.IOUtils
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationContext
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -32,6 +34,9 @@ import javax.validation.constraints.NotNull
 class FileController {
 
     @Autowired
+    lateinit var appCtx: ApplicationContext
+
+    @Autowired
     lateinit var configFile: ConfigFile
 
     fun getRootPath(): String {
@@ -47,6 +52,7 @@ class FileController {
 
     @GetMapping("/file-list")
     fun getFileList(@NotBlank path: String): ResponseEntity<JsonResult> {
+        appCtx.publishEvent(AEvent("chaowen"))
         var filePath = path
         val rootPath = getRootPath()
         if (rootPath == "") {
