@@ -15,9 +15,8 @@
                     upload
                 </el-button>
             </div>
-
+            <!-- if show hidden files switcher-->
             <div class="flex flex-center mgl20">
-                <!-- if show hidden files -->
                 <div>
                     <span class="pdr20">show hidden files</span>
                     <el-switch
@@ -25,6 +24,18 @@
                         @change="showHiddenFilesBtnToggled"
                     ></el-switch>
                 </div>
+            </div>
+            <!-- search files -->
+            <div>
+                <el-input
+                    placeholder="search files"
+                    v-model="searchFilesKey"
+                    @input="typeSearchKey"
+                >
+                    <template slot="append">
+                        <el-button icon="el-icon-search"></el-button>
+                    </template>
+                </el-input>
             </div>
         </div>
         <div>
@@ -122,6 +133,10 @@ export default {
     data() {
         return {
             /**
+             * user input for file searching
+             */
+            searchFilesKey: '',
+            /**
              * whether show hidden files, default false
              */
             showHiddenFiles: false,
@@ -144,6 +159,7 @@ export default {
                 //   type: 0
                 // }
             ],
+            tempFileListRecordForSearching: [],
             fileListWithoutHiddenFiles: [],
             fileListWithHiddenFiles: [],
         };
@@ -164,6 +180,26 @@ export default {
         this.fetch_file_list();
     },
     methods: {
+        /**
+         * determine whether it is under search mode
+         */
+        searchingMode() {
+            return this.searchFilesKey != null && this.searchFilesKey != '';
+        },
+        typeSearchKey(newInput) {
+            // do nothing if searching input is empty
+            if (!this.searchingMode()) {
+                return;
+            }
+
+            var filelist = this.filelist;
+            var resultFiles = filelist.filter((f) => {
+                f.name.contains(this.searchFilesKey);
+            });
+
+            // temp store
+            this.tempFileListRecordForSearching = this.filelist;
+        },
         showHiddenFilesBtnToggled() {
             if (this.showHiddenFiles) {
                 this.filelist = this.fileListWithHiddenFiles;
@@ -198,6 +234,8 @@ export default {
                     var filelist = resp.data;
                     this.fileListWithoutHiddenFiles = [];
                     this.fileListWithHiddenFiles = filelist;
+
+                    // filter files that are not hidden to array fileListWithoutHiddenFiles
                     filelist.forEach((f) => {
                         var filename = f.name;
                         if (filename != null) {
