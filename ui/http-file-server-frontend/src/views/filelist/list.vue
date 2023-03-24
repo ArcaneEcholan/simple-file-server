@@ -75,19 +75,12 @@
                             </span>
                         </div>
                         <div v-else>
-                            <router-link
-                                :to="
-                                    concat_path(
-                                        '/filelist?path=' + path,
-                                        scope.row.name,
-                                    )
-                                "
-                                class="link-type"
+                            <span
+                                @click="intoDir(scope.row.name)"
+                                class="underline file-name"
                             >
-                                <span class="underline file-name">
-                                    {{ scope.row.name + '/' }}
-                                </span>
-                            </router-link>
+                                {{ scope.row.name + '/' }}
+                            </span>
                         </div>
                     </template>
                 </el-table-column>
@@ -126,6 +119,7 @@ import * as file_api from '@/api/file.js';
 import * as config_api from '@/api/config.js';
 import { Message } from 'element-ui';
 import { PageLocation } from '@/utils/dynamicLocation';
+let jsBase64 = require('js-base64');
 export default {
     components: {
         readableDisplay,
@@ -170,6 +164,7 @@ export default {
          */
         $route: {
             handler(new_route) {
+                debugger;
                 this.path = new_route.query.path;
                 this.fetch_file_list();
             },
@@ -180,6 +175,13 @@ export default {
         this.fetch_file_list();
     },
     methods: {
+        intoDir(filename) {
+            debugger;
+            var filepath = this.concat_path(this.path, filename);
+            const encodedMessage = encodeURIComponent(filepath);
+            var location = `/filelist?path=${encodedMessage}`;
+            this.$router.push(location);
+        },
         /**
          * determine whether it is under search mode
          */
@@ -355,9 +357,11 @@ export default {
             document.getElementById('upload_file').click();
         },
         download(name) {
+            var filepath = this.concat_path(this.path, name);
+            const encodedMessage = encodeURIComponent(filepath);
             var location = `${
                 new PageLocation().baseURL
-            }/file?path=${this.concat_path(this.path, name)}`;
+            }/file?path=${encodedMessage}`;
 
             console.log('download location: ' + location);
             window.location.href = location;

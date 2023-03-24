@@ -25,8 +25,10 @@ import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.nio.file.*
+import java.util.*
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
+
 
 @Validated
 @RestController
@@ -99,15 +101,18 @@ class FileController {
     fun downloadFile(
         @NotNull @NotBlank path: String
     ): ResponseEntity<StreamingResponseBody?>? {
+
         var filePath = path
         val rootPath = getRootPath()
         if (rootPath == "") {
             throw BackendException(rootPath, RespCode.ROOT_PATH_CONFIG_ERROR)
         }
-        filePath = FilePathBuilder.ofPath()
-            .ct(rootPath)
-            .ct(filePath)
-            .build()
+
+        filePath = rootPath + filePath
+//        filePath = FilePathBuilder.ofPath()
+//            .ct(rootPath)
+//            .ct(filePath)
+//            .build()
 
         val file = File(filePath)
 
