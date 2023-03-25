@@ -30,7 +30,6 @@ import static fit.wenchao.http_file_server.utils.FileUtilsKt.isFile;
 @RequestMapping("/API")
 public class ConfigController {
 
-
     @Autowired
     ConfigFile configFile;
 
@@ -42,8 +41,7 @@ public class ConfigController {
         Boolean isFile = isFile(new File("hello"));
         try {
             configMap = configFile.listConfigurations();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Throwable rootCause = ExceptionUtils.getRootCause(e);
             if (rootCause instanceof java.nio.file.NoSuchFileException) {
                 throw new BackendException(CommonConsts.CONFIG_FILE_NAME,
@@ -56,9 +54,9 @@ public class ConfigController {
         for (String key : configMap.keySet()) {
             String value = configMap.get(key);
             ConfigPO conf = ConfigPO.builder()
-                                    .key(key)
-                                    .value(value)
-                                    .build();
+                    .key(key)
+                    .value(value)
+                    .build();
             configPOList.add(conf);
         }
         return ResponseEntityUtils.ok(JsonResult.ok(configPOList));
@@ -72,8 +70,7 @@ public class ConfigController {
             long valueLong = 0;
             try {
                 valueLong = Long.parseLong(value);
-            }
-            catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 throw new BackendException(value, RespCode.FRONT_END_PARAMS_ERROR);
             }
 
@@ -85,8 +82,7 @@ public class ConfigController {
 
         try {
             configFile.setProp(key, value);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Throwable rootCause = ExceptionUtils.getRootCause(e);
             if (rootCause instanceof java.nio.file.NoSuchFileException) {
                 throw new BackendException(CommonConsts.CONFIG_FILE_NAME,
@@ -102,8 +98,7 @@ public class ConfigController {
         String prop = null;
         try {
             prop = configFile.getProp(key);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Throwable rootCause = ExceptionUtils.getRootCause(e);
             if (rootCause instanceof java.nio.file.NoSuchFileException) {
                 throw new BackendException(CommonConsts.CONFIG_FILE_NAME,

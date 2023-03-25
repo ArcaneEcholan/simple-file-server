@@ -1,16 +1,18 @@
 package fit.wenchao.http_file_server.rest
 
 import fit.wenchao.http_file_server.ConfigFile
-import fit.wenchao.http_file_server.constants.*
+import fit.wenchao.http_file_server.constants.DEFAULT_MAX_UPLOAD_FILE_SIZE
+import fit.wenchao.http_file_server.constants.ONE_MB
+import fit.wenchao.http_file_server.constants.RespCode
 import fit.wenchao.http_file_server.eventListener.AEvent
 import fit.wenchao.http_file_server.exception.BackendException
 import fit.wenchao.http_file_server.model.JsonResult
 import fit.wenchao.http_file_server.model.vo.FileInfo
 import fit.wenchao.http_file_server.model.vo.UploadFileInfo
+import fit.wenchao.http_file_server.service.FileService
 import fit.wenchao.http_file_server.utils.FilePathBuilder
 import fit.wenchao.http_file_server.utils.ResponseEntityUtils
 import fit.wenchao.http_file_server.utils.iflet
-import fit.wenchao.http_file_server.utils.lastModifiedTime
 import org.apache.commons.io.IOUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -25,10 +27,72 @@ import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.nio.file.*
-import java.util.*
+import javax.validation.Valid
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
+class FileListFilterConditionsVO {
+
+    @Valid
+    var filterConditions: MutableList<FileListFilterConditionVO>? = mutableListOf()
+
+    enum class FilterType {
+        /**
+         * value is a single entry, like: desc
+         */
+        SINGLE,
+
+        /**
+         * value is a list, like: 1, 2, 3
+         */
+        LIST
+    }
+
+    fun resolveFileListFilterCondition(): MutableList<FilterCondition> {
+        var result = mutableListOf<FilterCondition>()
+        filterConditions?.forEach { filterConditionVO ->
+
+            val key: String? = filterConditionVO.key
+            val value: String? = filterConditionVO.value
+
+            key ?: return@forEach
+            value ?: return@forEach
+
+            val type: String? = filterConditionVO.type
+            // default type is SINGLE, Only support SINGLE now
+            val confirmedType = type ?: FilterType.SINGLE.name
+
+
+            if (confirmedType == FilterType.SINGLE.name) {
+                val filterCondition = FilterCondition()
+                filterCondition.key = key
+                filterCondition.value = value
+                filterCondition.type = confirmedType
+                result.add(filterCondition)
+            }
+
+            // if (confirmedType == FilterType.LIST.name) {
+            //
+            // }
+
+            // unknown filter type
+            return@forEach
+
+        }
+
+        return result
+    }
+}
+
+data class FileListFilterConditionVO(
+    var type: String?,
+    @NotNull
+    var key: String?,
+    @NotNull
+    var value: String?,
+) {
+
+}
 
 @Validated
 @RestController
@@ -40,6 +104,10 @@ class FileController {
 
     @Autowired
     lateinit var configFile: ConfigFile
+
+
+    @Autowired
+    lateinit var fileService: FileService;
 
     fun getRootPath(): String {
         var root: String? = configFile.getProp("root")
@@ -53,7 +121,12 @@ class FileController {
 
 
     @GetMapping("/file-list")
-    fun getFileList(@NotBlank path: String): ResponseEntity<JsonResult> {
+    fun getFileList(
+        @RequestBody filter: FileListFilterConditionsVO,
+        @NotBlank path: String
+    ): ResponseEntity<JsonResult> {
+
+
         appCtx.publishEvent(AEvent("chaowen"))
         var filePath = path
         val rootPath = getRootPath()
@@ -64,35 +137,8 @@ class FileController {
             .ct(rootPath)
             .ct(filePath)
             .build()
-        val file = File(filePath)
 
-        // path is not valid
-        if (!file.exists()) {
-            throw BackendException(filePath, RespCode.NO_FILE)
-        }
-        val files: Array<File>? = file.listFiles()
-        val fileInfoList: MutableList<FileInfo> = ArrayList()
-
-        files?.let {
-            for (everyFile in it) {
-
-                val lastModifiedTime: String = lastModifiedTime(everyFile)
-                val fileType: String = if (everyFile.isFile) "file" else "folder";
-                val name = everyFile.name
-                val absolutePath = everyFile.absolutePath
-                val length = everyFile.length()
-                val directory = everyFile.isDirectory
-
-                val fileInfo = FileInfo(
-                    fileType = fileType,
-                    name = name, path = absolutePath, length = length,
-                    type = if (directory) FileType.DIR.code else FileType.FILE.code,
-                    lastModifiedTime = lastModifiedTime
-                )
-
-                fileInfoList.add(fileInfo)
-            }
-        }
+        val fileInfoList: MutableList<FileInfo> = fileService.listFiles(filePath)
 
         return ResponseEntityUtils.ok(JsonResult.ok(fileInfoList))
     }

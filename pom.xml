@@ -14,9 +14,17 @@
     <name>http-file-server</name>
     <description>http-file-server</description>
     <properties>
-        <kotlin.version>1.7.22</kotlin.version>
+        <kotlin.version>1.6.21</kotlin.version>
     </properties>
     <dependencies>
+
+        <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+        <!--        <dependency>-->
+        <!--            <groupId>org.junit.jupiter</groupId>-->
+        <!--            <artifactId>junit-jupiter-api</artifactId>-->
+        <!--            <version>5.7.2</version>-->
+        <!--        </dependency>-->
+
         <!-- https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib-common -->
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
