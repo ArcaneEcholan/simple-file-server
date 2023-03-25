@@ -1,5 +1,6 @@
 package fit.wenchao.http_file_server.constants;
 
+@Deprecated
 public enum FileType {
     DIR(0),
     FILE(1);

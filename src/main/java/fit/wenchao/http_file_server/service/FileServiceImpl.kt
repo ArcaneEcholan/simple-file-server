@@ -1,6 +1,7 @@
 package fit.wenchao.http_file_server.service
 
-import fit.wenchao.http_file_server.constants.FileType
+import fit.wenchao.http_file_server.constants.FILE
+import fit.wenchao.http_file_server.constants.FOLDER
 import fit.wenchao.http_file_server.constants.RespCode
 import fit.wenchao.http_file_server.exception.BackendException
 import fit.wenchao.http_file_server.model.vo.FileInfo
@@ -28,7 +29,7 @@ class FileServiceImpl : FileService {
         for (everyFile in files) {
 
             val lastModifiedTime: String = lastModifiedTime(everyFile)
-            val fileType: String = if (everyFile.isFile) "file" else "folder";
+            val fileType: String = if (everyFile.isFile) FILE else FOLDER;
             val name = everyFile.name
             val absolutePath = everyFile.absolutePath
             val length = everyFile.length()
@@ -37,7 +38,6 @@ class FileServiceImpl : FileService {
             val fileInfo = FileInfo(
                 fileType = fileType,
                 name = name, path = absolutePath, length = length,
-                type = if (directory) FileType.DIR.code else FileType.FILE.code,
                 lastModifiedTime = lastModifiedTime
             )
 

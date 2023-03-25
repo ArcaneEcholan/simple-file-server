@@ -11,8 +11,8 @@
     <groupId>fit.wenchao</groupId>
     <artifactId>simple-file-server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>http-file-server</name>
-    <description>http-file-server</description>
+    <name>simple-file-server</name>
+    <description>simple-file-server</description>
     <properties>
         <kotlin.version>1.6.21</kotlin.version>
     </properties>
@@ -113,7 +113,7 @@
     <build>
         <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
         <testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
-        <finalName>http-file-server</finalName>
+        <finalName>simple-file-server</finalName>
         <plugins>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>

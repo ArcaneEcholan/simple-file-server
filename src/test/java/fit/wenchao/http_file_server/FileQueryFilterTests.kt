@@ -1,23 +1,25 @@
 package fit.wenchao.http_file_server
 
 import fit.wenchao.http_file_server.model.vo.FileInfo
-import fit.wenchao.http_file_server.rest.*
+import fit.wenchao.http_file_server.rest.QueryFilesOptVO
+import fit.wenchao.http_file_server.rest.FileListFilterOptsVO
+import fit.wenchao.http_file_server.rest.fileFilters.*
 import org.junit.jupiter.api.Test
 
 class FileQueryFilterTests {
 
     @Test
     fun overall() {
-        // construct filter conditionVos
-        var conditionsVO = FileListFilterConditionsVO()
-        var conditions: MutableList<FileListFilterConditionVO>
+        // prepare filter options, they will be sent by frontend in the real situation
+        var optsVO = FileListFilterOptsVO()
+        var opts: MutableList<QueryFilesOptVO>
+        opts = mutableListOf()
+        opts.add(QueryFilesOptVO(null, SortFilesize, DESC))
+        opts.add(QueryFilesOptVO(null, SearchFilename, ".abc"))
+        opts.add(QueryFilesOptVO(null, HideHiddenFile, FALSE))
+        optsVO.queryFilesOptions = opts
 
-        conditions = mutableListOf()
-        conditions.add(FileListFilterConditionVO(null, SortFilesize, DESC))
-        conditions.add(FileListFilterConditionVO(null, SearchFilename, ".abc"))
-        conditions.add(FileListFilterConditionVO(null, ShowHiddenFile, FALSE))
-        conditionsVO.filterConditions = conditions
-
+        // prepare filters, they will be at springIOC in the real situation
         var filters = mutableListOf<Filter>()
         filters.add(SortNameFilter())
         filters.add(SortSizeFilter())
@@ -25,19 +27,20 @@ class FileQueryFilterTests {
         filters.add(SearchFilenameFilter())
         filters.add(HiddenFileFilter())
 
+        // prepare raw file list, they will be retrieved from disk in the real situation
         var fileInfos = mutableListOf<FileInfo>()
-
         fileInfos.add(FileInfo(name = "abcdefg.txt", length = 2341234))
         fileInfos.add(FileInfo(name = ".abcdefg.txt", length = 2341234))
         fileInfos.add(FileInfo(name = ".abcxxdd", length = 6376545234))
         fileInfos.add(FileInfo(name = ".m2", length = 563443))
         fileInfos.add(FileInfo(name = "readme.md", length = 123452))
+        ///////////////////////////////  prepare  ///////////////////////////////
 
-        var filterConditions = conditionsVO.resolveFileListFilterCondition()
+        // we get the filter options first
+        var filterOptList = optsVO.resolveFileListFilterOptions()
 
-        filterConditions = sortFileFilterConditions(filterConditions)
-
-        filterConditions.forEach { filterCondition ->
+        // we apply them to file list
+        filterOptList.forEach { filterCondition ->
             val filter: Filter? = getFilter(filters, filterCondition)
             filter?.let {
                 fileInfos = it.processFileList(fileInfos, filterCondition.value)
@@ -50,20 +53,3 @@ class FileQueryFilterTests {
     }
 }
 
-fun sortFileFilterConditions(filterConditions: MutableList<FilterCondition>): MutableList<FilterCondition> {
-    val orderred = listOf<String>(
-        ShowHiddenFile,
-        SearchFilename,
-        SortFilename,
-        SortFilesize,
-        SortLastModifiedTime,
-    )
-
-    var comp: Comparator<FilterCondition> = Comparator<FilterCondition> { obj1, obj2 ->
-        val indexOfObj1 = orderred.indexOf(obj1.key)
-        val indexOfObj2 = orderred.indexOf(obj2.key)
-        indexOfObj1 - indexOfObj2
-    }
-    return filterConditions.sortedWith(comp).toMutableList()
-
-}

@@ -1,10 +1,13 @@
 import request from '@/utils/request'
 
-export function getFileList(query) {
+export function getFileList(query, queryFilesOptions) {
     return request({
         url: '/file-list',
         method: 'get',
-        params: query
+        params: query,
+        data: {
+            queryFilesOptions
+        }
     })
 }
 

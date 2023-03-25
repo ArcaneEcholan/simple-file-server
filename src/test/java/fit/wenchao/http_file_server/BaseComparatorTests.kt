@@ -1,7 +1,7 @@
 package fit.wenchao.http_file_server
 
-import fit.wenchao.http_file_server.rest.ASC
-import fit.wenchao.http_file_server.rest.getSorter
+import fit.wenchao.http_file_server.rest.fileFilters.ASC
+import fit.wenchao.http_file_server.rest.fileFilters.getSorter
 import org.junit.jupiter.api.Test
 
 class BaseComparatorTests {

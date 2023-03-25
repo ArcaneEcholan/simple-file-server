@@ -28,7 +28,6 @@ router.beforeEach(async(to, from, next) => {
     // set page title
     document.title = getPageTitle(to.meta.title)
 
-    debugger
     if (need_build_routes()) {
         fetch_user_info()
         resetRouter()

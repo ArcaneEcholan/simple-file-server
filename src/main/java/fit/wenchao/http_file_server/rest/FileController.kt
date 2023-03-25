@@ -9,6 +9,10 @@ import fit.wenchao.http_file_server.exception.BackendException
 import fit.wenchao.http_file_server.model.JsonResult
 import fit.wenchao.http_file_server.model.vo.FileInfo
 import fit.wenchao.http_file_server.model.vo.UploadFileInfo
+import fit.wenchao.http_file_server.rest.fileFilters.Filter
+import fit.wenchao.http_file_server.rest.fileFilters.QueryFilesOption
+import fit.wenchao.http_file_server.rest.fileFilters.getFilter
+import fit.wenchao.http_file_server.rest.fileFilters.sortFileFilterOptions
 import fit.wenchao.http_file_server.service.FileService
 import fit.wenchao.http_file_server.utils.FilePathBuilder
 import fit.wenchao.http_file_server.utils.ResponseEntityUtils
@@ -31,10 +35,10 @@ import javax.validation.Valid
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
-class FileListFilterConditionsVO {
+class FileListFilterOptsVO {
 
     @Valid
-    var filterConditions: MutableList<FileListFilterConditionVO>? = mutableListOf()
+    var queryFilesOptions: MutableList<QueryFilesOptVO>? = mutableListOf()
 
     enum class FilterType {
         /**
@@ -48,9 +52,9 @@ class FileListFilterConditionsVO {
         LIST
     }
 
-    fun resolveFileListFilterCondition(): MutableList<FilterCondition> {
-        var result = mutableListOf<FilterCondition>()
-        filterConditions?.forEach { filterConditionVO ->
+    fun resolveFileListFilterOptions(): MutableList<QueryFilesOption> {
+        var result = mutableListOf<QueryFilesOption>()
+        queryFilesOptions?.forEach { filterConditionVO ->
 
             val key: String? = filterConditionVO.key
             val value: String? = filterConditionVO.value
@@ -64,7 +68,7 @@ class FileListFilterConditionsVO {
 
 
             if (confirmedType == FilterType.SINGLE.name) {
-                val filterCondition = FilterCondition()
+                val filterCondition = QueryFilesOption()
                 filterCondition.key = key
                 filterCondition.value = value
                 filterCondition.type = confirmedType
@@ -80,11 +84,14 @@ class FileListFilterConditionsVO {
 
         }
 
+        // we sort them in a preset way
+        result = sortFileFilterOptions(result)
+
         return result
     }
 }
 
-data class FileListFilterConditionVO(
+data class QueryFilesOptVO(
     var type: String?,
     @NotNull
     var key: String?,
@@ -122,10 +129,12 @@ class FileController {
 
     @GetMapping("/file-list")
     fun getFileList(
-        @RequestBody filter: FileListFilterConditionsVO,
+        @RequestBody optsVO: FileListFilterOptsVO,
         @NotBlank path: String
     ): ResponseEntity<JsonResult> {
 
+        // we get the filter options first
+        var filterOptList = optsVO.resolveFileListFilterOptions()
 
         appCtx.publishEvent(AEvent("chaowen"))
         var filePath = path
@@ -138,9 +147,17 @@ class FileController {
             .ct(filePath)
             .build()
 
-        val fileInfoList: MutableList<FileInfo> = fileService.listFiles(filePath)
+        var fileInfos: MutableList<FileInfo> = fileService.listFiles(filePath)
 
-        return ResponseEntityUtils.ok(JsonResult.ok(fileInfoList))
+        // we apply them to file list
+        filterOptList.forEach { filterCondition ->
+            val filter: Filter? = getFilter(appCtx, filterCondition)
+            filter?.let {
+                fileInfos = it.processFileList(fileInfos, filterCondition.value)
+            }
+        }
+
+        return ResponseEntityUtils.ok(JsonResult.ok(fileInfos))
     }
 
     @GetMapping("/file")

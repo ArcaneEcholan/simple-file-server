@@ -67,7 +67,7 @@
                 >
                     <template slot-scope="scope">
                         <div
-                            v-if="scope.row.type === 1"
+                            v-if="isFile(scope.row)"
                             @click="download(scope.row.name)"
                         >
                             <span class="underline folder-name">
@@ -119,7 +119,9 @@ import * as file_api from '@/api/file.js';
 import * as config_api from '@/api/config.js';
 import { Message } from 'element-ui';
 import { PageLocation } from '@/utils/dynamicLocation';
-let jsBase64 = require('js-base64');
+import { FILE, FOLDER } from '@/file/consts';
+import * as FILE_CONSTS from '@/file/consts';
+import { QueryFileOption, QueryFileOptions } from '@/file/file';
 export default {
     components: {
         readableDisplay,
@@ -156,6 +158,8 @@ export default {
             tempFileListRecordForSearching: [],
             fileListWithoutHiddenFiles: [],
             fileListWithHiddenFiles: [],
+
+            queryFilesOptions: new QueryFileOptions(),
         };
     },
     watch: {
@@ -175,6 +179,9 @@ export default {
         this.fetch_file_list();
     },
     methods: {
+        isFile(file) {
+            return file.fileType === FILE;
+        },
         intoDir(filename) {
             debugger;
             var filepath = this.concat_path(this.path, filename);
@@ -203,11 +210,43 @@ export default {
             this.tempFileListRecordForSearching = this.filelist;
         },
         showHiddenFilesBtnToggled() {
+            // if (this.showHiddenFiles) {
+            //     this.showHiddenFiles = false;
+            // } else {
+            //     this.showHiddenFiles = true;
+            // }
+            // debugger;
+
             if (this.showHiddenFiles) {
-                this.filelist = this.fileListWithHiddenFiles;
+                // remove hide-true, add hide-false
+                this.queryFilesOptions.removeIfPresent(
+                    new QueryFileOption(
+                        FILE_CONSTS.HideHiddenFile,
+                        FILE_CONSTS.TRUE,
+                    ),
+                );
+                this.queryFilesOptions.putIfAbsent(
+                    new QueryFileOption(
+                        FILE_CONSTS.HideHiddenFile,
+                        FILE_CONSTS.FALSE,
+                    ),
+                );
             } else {
-                this.filelist = this.fileListWithoutHiddenFiles;
+                // remove hide-false, add hide-true
+                this.queryFilesOptions.removeIfPresent(
+                    new QueryFileOption(
+                        FILE_CONSTS.HideHiddenFile,
+                        FILE_CONSTS.FALSE,
+                    ),
+                );
+                this.queryFilesOptions.putIfAbsent(
+                    new QueryFileOption(
+                        FILE_CONSTS.HideHiddenFile,
+                        FILE_CONSTS.TRUE,
+                    ),
+                );
             }
+            this.fetch_file_list();
         },
         fileNameSortMethod(fileA, fileB) {
             var nameA = fileA.name;
@@ -228,30 +267,36 @@ export default {
                 this.path = '/';
             }
 
+            console.log(this.queryFilesOptions.options);
+            debugger;
             file_api
-                .getFileList({
-                    path: this.path,
-                })
+                .getFileList(
+                    {
+                        path: this.path,
+                    },
+                    this.queryFilesOptions.options,
+                )
                 .then((resp) => {
                     var filelist = resp.data;
-                    this.fileListWithoutHiddenFiles = [];
-                    this.fileListWithHiddenFiles = filelist;
+                    this.filelist = filelist;
+                    // this.fileListWithoutHiddenFiles = [];
+                    // this.fileListWithHiddenFiles = filelist;
 
-                    // filter files that are not hidden to array fileListWithoutHiddenFiles
-                    filelist.forEach((f) => {
-                        var filename = f.name;
-                        if (filename != null) {
-                            if (!filename.startsWith('.')) {
-                                this.fileListWithoutHiddenFiles.push(f);
-                            }
-                        }
-                    });
+                    // // filter files that are not hidden to array fileListWithoutHiddenFiles
+                    // filelist.forEach((f) => {
+                    //     var filename = f.name;
+                    //     if (filename != null) {
+                    //         if (!filename.startsWith('.')) {
+                    //             this.fileListWithoutHiddenFiles.push(f);
+                    //         }
+                    //     }
+                    // });
 
-                    if (this.showHiddenFiles) {
-                        this.filelist = this.fileListWithHiddenFiles;
-                    } else {
-                        this.filelist = this.fileListWithoutHiddenFiles;
-                    }
+                    // if (this.showHiddenFiles) {
+                    //     this.filelist = this.fileListWithHiddenFiles;
+                    // } else {
+                    //     this.filelist = this.fileListWithoutHiddenFiles;
+                    // }
                 })
                 .catch((resp) => {
                     if (resp.code === 'NO_FILE') {
