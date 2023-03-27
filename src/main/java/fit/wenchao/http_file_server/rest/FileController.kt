@@ -4,15 +4,11 @@ import fit.wenchao.http_file_server.ConfigFile
 import fit.wenchao.http_file_server.constants.DEFAULT_MAX_UPLOAD_FILE_SIZE
 import fit.wenchao.http_file_server.constants.ONE_MB
 import fit.wenchao.http_file_server.constants.RespCode
-import fit.wenchao.http_file_server.eventListener.AEvent
 import fit.wenchao.http_file_server.exception.BackendException
 import fit.wenchao.http_file_server.model.JsonResult
 import fit.wenchao.http_file_server.model.vo.FileInfo
 import fit.wenchao.http_file_server.model.vo.UploadFileInfo
-import fit.wenchao.http_file_server.rest.fileFilters.Filter
-import fit.wenchao.http_file_server.rest.fileFilters.QueryFilesOption
-import fit.wenchao.http_file_server.rest.fileFilters.getFilter
-import fit.wenchao.http_file_server.rest.fileFilters.sortFileFilterOptions
+import fit.wenchao.http_file_server.rest.fileFilters.*
 import fit.wenchao.http_file_server.service.FileService
 import fit.wenchao.http_file_server.utils.FilePathBuilder
 import fit.wenchao.http_file_server.utils.ResponseEntityUtils
@@ -128,15 +124,12 @@ class FileController {
 
 
     @GetMapping("/file-list")
-    fun getFileList(
-        @RequestBody optsVO: FileListFilterOptsVO,
-        @NotBlank path: String
-    ): ResponseEntity<JsonResult> {
+    fun getFileList(@RequestParam optsMap: MutableMap<String, String>, @NotBlank path: String): ResponseEntity<JsonResult> {
+
 
         // we get the filter options first
-        var filterOptList = optsVO.resolveFileListFilterOptions()
+        var filterOptList = resolveFileListFilterOptions(optsMap)
 
-        appCtx.publishEvent(AEvent("chaowen"))
         var filePath = path
         val rootPath = getRootPath()
         if (rootPath == "") {

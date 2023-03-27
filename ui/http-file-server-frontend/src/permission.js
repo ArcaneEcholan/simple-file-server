@@ -22,6 +22,8 @@ function fetch_user_info() {
 }
 
 router.beforeEach(async(to, from, next) => {
+    debugger
+    console.log(`global before each, from ${from.path} to ${to.path}`)
     // start progress bar
     NProgress.start()
 

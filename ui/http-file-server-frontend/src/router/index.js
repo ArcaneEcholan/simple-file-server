@@ -48,7 +48,23 @@ export const constantRoutes = [
             }
         ]
     },
-
+    {
+        path: '/test1',
+        component: Layout,
+        children: [
+            {
+                path: '',
+                component: () => import('@/views/test/test1.vue'),
+                beforeEnter: (to, from, next) => {
+                    debugger;
+                    console.log(`router level beforeEnter, from ${from.path} to ${to.path}`);
+                    next()
+                },
+                name: 'test1',
+                meta: { title: 'test1' }
+            }
+        ]
+    },
     {
         path: '/config',
         component: Layout,

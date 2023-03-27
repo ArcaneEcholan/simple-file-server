@@ -1,5 +1,8 @@
+<!-- eslint-disable vue/require-v-for-key -->
 <template lang="">
     <div style="margin: 50px 40px">
+        <el-button @click="testvar = 'you'"></el-button>
+        {{ testvar }}
         <!-- top tool bar -->
         <div class="flex toolbar" style="padding: 20px 0px">
             <!-- upload btn -->
@@ -50,16 +53,33 @@
                 </div>
             </div>
 
-            <el-table
-                :data="filelist"
-                style="width: 100%"
-                :default-sort="{
-                    prop: 'lastModifiedTime',
-                    order: 'descending',
-                }"
-            >
+            <!-- sort btns -->
+            <div>
+                <!-- <button>
+                    time
+                    <font-awesome-icon
+                        style="font-size: 12px"
+                        icon="fa-solid fa-arrow-down"
+                    />
+                </button> -->
+
+                <div id="sortBtnGroup">
+                    <button
+                        @click="chooseSortBtn(btnModel.sortKey)"
+                        v-for="btnModel in sortBtns"
+                        class="no-radius"
+                    >
+                        {{ btnModel.name }}
+                        <font-awesome-icon
+                            style="font-size: 12px"
+                            :icon="`fa-solid fa-arrow-${btnModel.arrowStatus}`"
+                        />
+                    </button>
+                </div>
+            </div>
+
+            <el-table :data="filelist" style="width: 100%">
                 <el-table-column
-                    sortable
                     prop="name"
                     label="name"
                     width="360"
@@ -84,12 +104,7 @@
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column
-                    sortable
-                    prop="length"
-                    label="文件大小"
-                    width="360"
-                >
+                <el-table-column prop="length" label="文件大小" width="360">
                     <template slot-scope="scope">
                         <readable-display
                             type="file-size"
@@ -98,13 +113,11 @@
                     </template>
                 </el-table-column>
                 <el-table-column
-                    sortable
                     prop="fileType"
                     label="fileType"
                     width="360"
                 ></el-table-column>
                 <el-table-column
-                    sortable
                     prop="lastModifiedTime"
                     label="lastModifiedTime"
                     width="360"
@@ -122,12 +135,40 @@ import { PageLocation } from '@/utils/dynamicLocation';
 import { FILE, FOLDER } from '@/file/consts';
 import * as FILE_CONSTS from '@/file/consts';
 import { QueryFileOption, QueryFileOptions } from '@/file/file';
+
 export default {
     components: {
         readableDisplay,
     },
+    beforeRouteUpdate(to, from, next) {
+        debugger;
+        console.log(from.query);
+        console.log(to.query);
+        next();
+    },
     data() {
         return {
+            testvar: 'hello',
+            sortBtns: [
+                {
+                    name: 'name',
+                    arrowStatus: '',
+                    sortKey: FILE_CONSTS.SortFilename,
+                },
+                {
+                    name: 'size',
+                    arrowStatus: '',
+                    sortKey: FILE_CONSTS.SortFilesize,
+                },
+                {
+                    name: 'time',
+                    arrowStatus: '',
+                    sortKey: FILE_CONSTS.SortLastModifiedTime,
+                },
+            ],
+            SortNameIcon: '',
+            SortSizeIcon: '',
+            SortTimeIcon: '',
             /**
              * user input for file searching
              */
@@ -135,7 +176,10 @@ export default {
             /**
              * whether show hidden files, default false
              */
-            showHiddenFiles: false,
+            showHiddenFiles:
+                this.$route.query.showHiddenFiles == null
+                    ? false
+                    : this.$route.query.showHiddenFiles,
             /**
              * relative path to root( root is configured on the backend, it's transparent to frontend)
              */
@@ -168,25 +212,164 @@ export default {
          */
         $route: {
             handler(new_route) {
-                debugger;
-                this.path = new_route.query.path;
+                this.populatePageWithQuerys(new_route);
                 this.fetch_file_list();
             },
         },
     },
 
     created() {
+        this.populatePageWithQuerys(this.$route);
         this.fetch_file_list();
     },
     methods: {
+        populatePageWithQuerys(route) {
+            let pageQuery = route.query;
+
+            // populate path
+            this.path = pageQuery.path;
+
+            // populate sort buttons group with query params
+            this.sortBtns.forEach((item) => {
+                let sortKey = item.sortKey;
+                let sortValue = pageQuery[sortKey];
+                // assign arrowStatus
+                if (sortValue) {
+                    let upOrDown =
+                        FILE_CONSTS.MAPPING_SORTMETHOD_ARROW[sortValue];
+                    if (upOrDown != null) {
+                        item.arrowStatus = upOrDown;
+                    }
+                }
+            });
+        },
+        /**
+         * Recollect all query conditions, including path, sort conditions, then build and return HTTP GET query params
+         *
+         * One example for return value is: "?path=/path/to/file&name=hello&age=12"
+         *
+         * Invoked when one query condition changed
+         */
+        concatQuerys() {
+            // path=xxx
+            var pathQueryParam = this.buildPathQueryParam();
+            // Sortxxx=xxx&Sortxxx=xxx
+            var sortQuerys = this.concatSortQuerys();
+            // concat
+            let querys = `?${pathQueryParam}&${sortQuerys}`;
+            return querys;
+        },
+        /**
+         * invoked when click one of sort-buttons
+         * @param {*} sortKey sort option key. eg: SortFilename
+         */
+        chooseSortBtn(sortKey) {
+            // find the clicked btn by sort key
+            let btn = this.sortBtns.find((item) => {
+                return item.sortKey == sortKey;
+            });
+
+            // no result, return
+            if (!btn) {
+                return;
+            }
+
+            // remove icon from buttons whose sort key != sortKey
+            this.sortBtns
+                .filter((item) => {
+                    return item.sortKey != sortKey;
+                })
+                .forEach((item) => (item.arrowStatus = ''));
+
+            // change icon for target sort button
+            btn.arrowStatus == ''
+                ? (btn.arrowStatus = 'up')
+                : btn.arrowStatus == 'up'
+                    ? (btn.arrowStatus = 'down')
+                    : btn.arrowStatus == 'down'
+                        ? (btn.arrowStatus = 'up')
+                        : '';
+
+            let querys = this.concatQuerys();
+            debugger;
+            this.$router.push(`/filelist${querys}`);
+            // // refetch filelist
+            // this.fetch_file_list();
+        },
         isFile(file) {
             return file.fileType === FILE;
         },
-        intoDir(filename) {
-            debugger;
+
+        /**
+         * querys are joined by "&", eg: name=wc&age=12&address=china
+         *
+         * if no params is available, return empty string
+         */
+        concatSortQuerys() {
+            let sortQuerys = '';
+            // traverse each sort btn, collect sort options
+            this.sortBtns.forEach((item) => {
+                // only concat sort options which is not blank
+                if (item.arrowStatus == '') {
+                    return;
+                }
+                console.log(item.arrowStatus);
+                console.log(FILE_CONSTS.MAPPING_ARROW_SORTMETHOD);
+                // map up and down to DESC and ASC
+                let sortMethod =
+                    FILE_CONSTS.MAPPING_ARROW_SORTMETHOD[item.arrowStatus];
+                // concat one query entry
+                sortQuerys += `${item.sortKey}=${sortMethod}&`;
+            });
+
+            // remove the last "&"
+            if (sortQuerys != '') {
+                sortQuerys = sortQuerys.substring(0, sortQuerys.length - 1);
+            }
+
+            return sortQuerys;
+        },
+        /**
+         * Concat path param (this.path + filename) and encode it, then return path=${finalPath}
+         *
+         * A return value for example: path=encoded(/path/to/somewhere/filename)
+         *
+         * @param {*} filename we need to concat this filename to vue.path variable
+         */
+        encodeFilePathQueryCondition(filename) {
             var filepath = this.concat_path(this.path, filename);
             const encodedMessage = encodeURIComponent(filepath);
-            var location = `/filelist?path=${encodedMessage}`;
+            var query = `path=${encodedMessage}`;
+            return query;
+        },
+        /**
+         * Concat path param (this.path + filename) and encode it, then return path=${finalPath}
+         *
+         * A return value for example: path=encoded(/path/to/somewhere/filename)
+         *
+         * @param {*} filename we need to concat this filename to vue.path variable
+         */
+        buildPathQueryParam() {
+            var filepath = this.path;
+            const encodedMessage = encodeURIComponent(filepath);
+            var query = `path=${encodedMessage}`;
+            return query;
+        },
+        /**
+         * starts with ?, eg: "?path=/path/to/file&name=abc&SortFilename=DESC"
+         * @param {string} filename
+         */
+        concatQueryFileQuerys(filename) {
+            let sortQuerys = this.concatSortQuerys();
+            var pathParam = this.encodeFilePathQueryCondition(filename);
+            var querys = `?${pathParam}&${sortQuerys}`;
+            return querys;
+        },
+        intoDir(filename) {
+            var querys = this.concatQueryFileQuerys(filename);
+
+            var location = `/filelist${querys}`;
+
             this.$router.push(location);
         },
         /**
@@ -266,16 +449,12 @@ export default {
             if (this.path == null) {
                 this.path = '/';
             }
+            const queryString = `path=${this.path}&${this.concatSortQuerys()}`;
 
-            console.log(this.queryFilesOptions.options);
-            debugger;
+            console.log(queryString);
+
             file_api
-                .getFileList(
-                    {
-                        path: this.path,
-                    },
-                    this.queryFilesOptions.options,
-                )
+                .getFileList(queryString)
                 .then((resp) => {
                     var filelist = resp.data;
                     this.filelist = filelist;
@@ -329,9 +508,12 @@ export default {
 
             console.log(parent_path);
 
+            var queryOptions = this.concatSortQuerys();
+
+            const queryString = `path=${parent_path}&${queryOptions}`;
+
             this.$router.push({
-                path: '/filelist',
-                query: { path: parent_path },
+                path: `/filelist?${queryString}`,
             });
         },
         do_upload_file() {
@@ -402,11 +584,8 @@ export default {
             document.getElementById('upload_file').click();
         },
         download(name) {
-            var filepath = this.concat_path(this.path, name);
-            const encodedMessage = encodeURIComponent(filepath);
-            var location = `${
-                new PageLocation().baseURL
-            }/file?path=${encodedMessage}`;
+            var pathParam = this.encodeFilePathQueryCondition(name);
+            var location = `${new PageLocation().baseURL}/file?${pathParam}`;
 
             console.log('download location: ' + location);
             window.location.href = location;
@@ -444,5 +623,16 @@ export default {
     font-size: 20px;
     color: $google-gray-400;
     cursor: pointer;
+}
+
+#sortBtnGroup {
+    .no-radius {
+        border-radius: 0;
+    }
+
+    button.selected {
+        background-color: $google-red;
+        color: white;
+    }
 }
 </style>

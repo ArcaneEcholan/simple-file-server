@@ -37,7 +37,7 @@ export class PageLocation {
     // In general, hardCode mode is used in develepment while dynamic mode is used in production.
     customBaseURL() {
         return {
-            baseURL: 'http://10.3.94.88:8088/API',
+            baseURL: 'http://10.3.68.180:8088/API',
             // baseURL: 'http://172.20.10.4:8088/API',
             hardCode: true
         }

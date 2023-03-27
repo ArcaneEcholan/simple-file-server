@@ -1,3 +1,5 @@
+import * as FILE_CONSTS from '@/file/consts'
+
 export class QueryFileOption {
     key
     value
@@ -12,6 +14,47 @@ export class QueryFileOptions {
     options
     constructor() {
         this.options = []
+    }
+
+    get(key) {
+        let findone = this.options.find(item => item.key === key)
+        if (findone) {
+            return findone.value
+        }
+        return null
+    }
+
+    resolveQuery(vueRouterQuery) {
+        // export const HideHiddenFile = 'HideHiddenFile'
+        // export const SortFilename = 'SortFilename'
+        // export const SortLastModifiedTime = 'SortLastModifiedTime'
+        // export const SortFilesize = 'SortFilesize'
+        // export const SearchFilename = 'SearchFilename'
+        let options = []
+        FILE_CONSTS.QueryFileOpts.forEach(opt => {
+            if (vueRouterQuery[opt] != null) {
+                options.push(new QueryFileOption(opt, vueRouterQuery[opt]))
+            }
+        })
+        this.options = options
+    }
+
+    toQueryString() {
+        // export const HideHiddenFile = 'HideHiddenFile'
+        // export const SortFilename = 'SortFilename'
+        // export const SortLastModifiedTime = 'SortLastModifiedTime'
+        // export const SortFilesize = 'SortFilesize'
+        // export const SearchFilename = 'SearchFilename'
+        let opts = this.options
+        let queryString = ''
+        opts.forEach(opt => {
+            let key = opt.key
+            let value = opt.value
+            if (FILE_CONSTS.QueryFileOpts.includes(key)) {
+                queryString += `${key}=${value}&`
+            }
+        })
+        return queryString
     }
 
     putIfAbsent(newOpt) {

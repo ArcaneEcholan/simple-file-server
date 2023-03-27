@@ -1,13 +1,9 @@
 import request from '@/utils/request'
 
-export function getFileList(query, queryFilesOptions) {
+export function getFileList(query) {
     return request({
-        url: '/file-list',
+        url: `/file-list?${query}`,
         method: 'get',
-        params: query,
-        data: {
-            queryFilesOptions
-        }
     })
 }
 

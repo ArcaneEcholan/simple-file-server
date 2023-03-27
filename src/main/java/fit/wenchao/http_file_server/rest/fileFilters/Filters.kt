@@ -155,6 +155,9 @@ class SearchFilenameFilter : Filter {
     }
 }
 
+
+
+
 fun getFilters(appCtx: ApplicationContext): MutableList<Filter> {
     val beansOfType = appCtx.getBeansOfType(Filter::class.java)
     return beansOfType.values.toMutableList()
@@ -222,4 +225,30 @@ class QueryFilesOption {
      */
     lateinit var type: String
 
+}
+
+
+
+
+
+fun resolveFileListFilterOptions(optsMap: MutableMap<String, String>): MutableList<QueryFilesOption> {
+
+    var result = mutableListOf<QueryFilesOption>()
+    optsMap.forEach { filterConditionVO ->
+
+        val key: String = filterConditionVO.key
+        val value: String = filterConditionVO.value
+
+
+        val filterCondition = QueryFilesOption()
+        filterCondition.key = key
+        filterCondition.value = value
+        result.add(filterCondition)
+
+    }
+
+    // we sort them in a preset way
+    result = sortFileFilterOptions(result)
+
+    return result
 }
