@@ -112,6 +112,11 @@ class FileController {
     @Autowired
     lateinit var fileService: FileService;
 
+    @GetMapping("/ping")
+    fun test() : String {
+        return "pong"
+    }
+
     fun getRootPath(): String {
         var root: String? = configFile.getProp("root")
 
@@ -121,6 +126,7 @@ class FileController {
 
         return root ?: ""
     }
+
 
 
     @GetMapping("/file-list")
