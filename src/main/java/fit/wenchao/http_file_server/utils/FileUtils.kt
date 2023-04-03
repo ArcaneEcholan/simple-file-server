@@ -15,10 +15,6 @@ fun isSymbolicLink(f: File): Boolean {
         .equals(f.getCanonicalPath());
 }
 
-fun isDirectory(f: File): Boolean {
-    return isFile(f);
-}
-
 fun lastModifiedTime(f: File): String {
     val lastModified: Long = f.lastModified()
     if (lastModified == 0L) {

@@ -3,7 +3,7 @@ package fit.wenchao.http_file_server.rest.fileFilters
 class Consts {
 }
 
-const val HideHiddenFile = "HideHiddenFile"
+const val ShowHiddenFiles = "ShowHiddenFiles"
 const val SortFilename = "SortFilename"
 const val SortLastModifiedTime = "SortLastModifiedTime"
 const val SortFilesize = "SortFilesize"

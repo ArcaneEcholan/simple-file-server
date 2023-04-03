@@ -19,23 +19,30 @@ interface Filter {
  * }
  */
 @Component
-class HiddenFileFilter : Filter {
+class ShowHiddenFileFilter : Filter {
+
     override fun supportFilterCondition(filterConditionKey: String): Boolean {
-        return filterConditionKey == HideHiddenFile
+        return filterConditionKey == ShowHiddenFiles
     }
 
     override fun processFileList(fileInfoList: MutableList<FileInfo>, vararg args: String): MutableList<FileInfo> {
         if (args.size != 1) {
             return fileInfoList
         }
-        var hide = args[0]
-        if (hide == TRUE) {
-            return fileInfoList.filter { fileInfo ->
-                !fileInfo.name.startsWith(".")
-            }.toMutableList()
-        } else {
-            return fileInfoList
+        var showHiddenFiles = args[0]
+        if (showHiddenFiles == FALSE) {
+            return fileInfoList.filter { fileInfo -> notHiddenFile(fileInfo.name) }.toMutableList()
         }
+
+        return fileInfoList
+    }
+
+    fun isHiddenFile(filename: String): Boolean {
+        return filename.startsWith(".")
+    }
+
+    fun notHiddenFile(filename: String): Boolean {
+        return !isHiddenFile(filename)
     }
 }
 
@@ -150,12 +157,10 @@ class SearchFilenameFilter : Filter {
         val partialFilename = args[0]
 
         return fileInfoList.filter { fileInfo ->
-            fileInfo.name.startsWith(partialFilename)
+            fileInfo.name.lowercase().startsWith(partialFilename.lowercase())
         }.toMutableList()
     }
 }
-
-
 
 
 fun getFilters(appCtx: ApplicationContext): MutableList<Filter> {
@@ -183,7 +188,7 @@ fun getFilter(appCtx: ApplicationContext, filterOption: QueryFilesOption): Filte
 
 fun sortFileFilterOptions(filterOpts: MutableList<QueryFilesOption>): MutableList<QueryFilesOption> {
     val orderred = listOf<String>(
-        HideHiddenFile,
+        ShowHiddenFiles,
         SearchFilename,
         SortFilename,
         SortFilesize,
@@ -228,9 +233,6 @@ class QueryFilesOption {
 }
 
 
-
-
-
 fun resolveFileListFilterOptions(optsMap: MutableMap<String, String>): MutableList<QueryFilesOption> {
 
     var result = mutableListOf<QueryFilesOption>()
@@ -238,7 +240,6 @@ fun resolveFileListFilterOptions(optsMap: MutableMap<String, String>): MutableLi
 
         val key: String = filterConditionVO.key
         val value: String = filterConditionVO.value
-
 
         val filterCondition = QueryFilesOption()
         filterCondition.key = key

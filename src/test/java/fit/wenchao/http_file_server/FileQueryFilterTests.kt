@@ -16,7 +16,7 @@ class FileQueryFilterTests {
         opts = mutableListOf()
         opts.add(QueryFilesOptVO(null, SortFilesize, DESC))
         opts.add(QueryFilesOptVO(null, SearchFilename, ".abc"))
-        opts.add(QueryFilesOptVO(null, HideHiddenFile, FALSE))
+        opts.add(QueryFilesOptVO(null, ShowHiddenFiles, FALSE))
         optsVO.queryFilesOptions = opts
 
         // prepare filters, they will be at springIOC in the real situation
@@ -25,7 +25,7 @@ class FileQueryFilterTests {
         filters.add(SortSizeFilter())
         filters.add(SortLastModifiedTimeFilter())
         filters.add(SearchFilenameFilter())
-        filters.add(HiddenFileFilter())
+        filters.add(ShowHiddenFileFilter())
 
         // prepare raw file list, they will be retrieved from disk in the real situation
         var fileInfos = mutableListOf<FileInfo>()

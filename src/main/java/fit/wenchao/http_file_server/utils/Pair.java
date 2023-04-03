@@ -1,4 +1,4 @@
-package fit.wenchao.http_file_server.utils.json;
+package fit.wenchao.http_file_server.utils;
 
 
 public class Pair {
@@ -10,7 +10,6 @@ public class Pair {
         this.key = key;
         this.value = value;
     }
-
 
     public String getKey() {
         return key;
@@ -24,11 +23,4 @@ public class Pair {
         return new Pair(key, value);
     }
 
-    //public static Pair pair(String key, String value) {
-    //    return new Pair(key, value);
-    //}
-
-    //public static Pair pair(String key, Json value) {
-    //    return new Pair(key, value);
-    //}
 }

@@ -23,10 +23,6 @@ public class ConfigFile {
                            .ct(CommonConsts.CONFIG_FILE_NAME)
                            .build();
 
-    public String getConfigFilePath() {
-        return configFilePath;
-    }
-
     public boolean exists() {
         return Files.exists(Paths.get(configFilePath));
     }
@@ -188,7 +184,6 @@ public class ConfigFile {
                 }
 
                 String lineKey = lineKeyAndValue.getKey();
-                String lineValue = lineKeyAndValue.getValue();
 
                 // if current line is the target line, change the value and
                 // put the line into buffer

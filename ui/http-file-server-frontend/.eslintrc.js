@@ -14,6 +14,13 @@ module.exports = {
   // add your custom rules here
   //it is base on https://github.com/vuejs/eslint-config-vue
   rules: {
+    // disallow noused methods to help clean out dead methods properties
+    "vue/no-unused-properties": ["error", {
+        "groups": ["methods", "data"],
+        "deepData": false,
+        "ignorePublicMembers": false
+    }],
+    // turn off this option to allow multiple elements in el-table or some other components
     'vue/prop-name-casing': [0, 'camelCase' | 'snake_case'],
     'vue/order-in-components': [
         1,
@@ -306,6 +313,7 @@ module.exports = {
     ],
     'no-unreachable': 2,
     'no-unsafe-finally': 2,
+
     'no-unused-vars': [
         2,
         {

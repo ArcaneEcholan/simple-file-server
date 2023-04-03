@@ -38,7 +38,6 @@ public class ConfigController {
     public ResponseEntity<JsonResult> getConfigList() {
 
         Map<String, String> configMap = null;
-        Boolean isFile = isFile(new File("hello"));
         try {
             configMap = configFile.listConfigurations();
         } catch (Exception e) {

@@ -1,14 +1,14 @@
 export const FILE = 'FILE'
 export const FOLDER = 'FOLDER'
 
-export const HideHiddenFile = 'HideHiddenFile'
+export const ShowHiddenFile = 'ShowHiddenFiles'
 export const SortFilename = 'SortFilename'
 export const SortLastModifiedTime = 'SortLastModifiedTime'
 export const SortFilesize = 'SortFilesize'
 export const SearchFilename = 'SearchFilename'
 
 export const QueryFileOpts = [
-    HideHiddenFile,
+    ShowHiddenFile,
     SortFilename,
     SortLastModifiedTime,
     SortFilesize,
