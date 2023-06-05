@@ -15,7 +15,7 @@ public class ApiLogInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String ipAddress = IPUtils.getIpAddr(request);
-        log.debug("{} {} {}", request.getMethod(), request.getRequestURI(), ipAddress);
+        log.info("{} {} {}", request.getMethod(), request.getRequestURI(), ipAddress);
         return true;
     }
 }
