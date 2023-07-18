@@ -2,8 +2,8 @@ package fit.wenchao.http_file_server.service
 
 import fit.wenchao.http_file_server.constants.FILE
 import fit.wenchao.http_file_server.constants.FOLDER
-import fit.wenchao.http_file_server.constants.RespCode
 import fit.wenchao.http_file_server.exception.BackendException
+import fit.wenchao.http_file_server.exception.RespCode
 import fit.wenchao.http_file_server.model.vo.FileInfo
 import fit.wenchao.http_file_server.utils.lastModifiedTime
 import org.springframework.stereotype.Service
@@ -33,7 +33,6 @@ class FileServiceImpl : FileService {
             val name = everyFile.name
             val absolutePath = everyFile.absolutePath
             val length = everyFile.length()
-            val directory = everyFile.isDirectory
 
             val fileInfo = FileInfo(
                 fileType = fileType,

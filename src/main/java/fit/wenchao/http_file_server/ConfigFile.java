@@ -1,5 +1,6 @@
 package fit.wenchao.http_file_server;
 
+import fit.wenchao.db.generator.Generator;
 import fit.wenchao.http_file_server.constants.CommonConsts;
 import fit.wenchao.http_file_server.utils.FilePathBuilder;
 import org.springframework.stereotype.Component;
@@ -31,7 +32,6 @@ public class ConfigFile {
      * Create config file if it's not exists.
      */
     public synchronized void create() {
-
         File configFile = new File(configFilePath);
 
         // create config file in the java running directory if the config

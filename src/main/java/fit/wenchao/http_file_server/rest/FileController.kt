@@ -1,11 +1,13 @@
 package fit.wenchao.http_file_server.rest
 
 import fit.wenchao.http_file_server.ConfigFile
+import fit.wenchao.http_file_server.constants.API_PREFIX
 import fit.wenchao.http_file_server.constants.DEFAULT_MAX_UPLOAD_FILE_SIZE
 import fit.wenchao.http_file_server.constants.ONE_MB
-import fit.wenchao.http_file_server.constants.RespCode
+
 import fit.wenchao.http_file_server.exception.BackendException
-import fit.wenchao.http_file_server.model.JsonResult
+import fit.wenchao.http_file_server.exception.JsonResult
+import fit.wenchao.http_file_server.exception.RespCode
 import fit.wenchao.http_file_server.model.vo.FileInfo
 import fit.wenchao.http_file_server.model.vo.UploadFileInfo
 import fit.wenchao.http_file_server.rest.fileFilters.*
@@ -99,7 +101,7 @@ data class QueryFilesOptVO(
 
 @Validated
 @RestController
-@RequestMapping("/API")
+@RequestMapping(API_PREFIX)
 class FileController {
 
     @Autowired
