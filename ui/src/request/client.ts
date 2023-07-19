@@ -1,5 +1,5 @@
 import request from '@/request'
-import { AxiosPromise } from 'axios'
+import {AxiosPromise} from 'axios'
 
 class Client {
     // region: system config
@@ -62,7 +62,7 @@ class Client {
         return request({
             url: '/user-info',
             method: 'get',
-            headers: { 'entity-token': token },
+            headers: {'entity-token': token},
         })
     }
 
@@ -77,6 +77,32 @@ class Client {
             },
         })
     }
+
+    // region: file list
+
+    static getFileList(query,token: string) : AxiosPromise<any>{
+        return request({
+            url: `/file-list?${query}`,
+            method: 'get',
+            headers: {'entity-token': token},
+        })
+    }
+
+    static upload(formdata,token: string): AxiosPromise<any> {
+        return request({
+            url: `/file`,
+            method: 'post',
+            data: formdata,
+            timeout: 0,
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'entity-token': token
+            }
+        })
+    }
+
+
+    // endregion
 }
 
 export default Client

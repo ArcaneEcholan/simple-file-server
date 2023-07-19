@@ -114,12 +114,13 @@
 </template>
 <script lang="ts">
 import readableDisplay from '@/views/common/readable-display.vue'
-import * as file_api from '@/api/file.js'
 import * as config_api from '@/api/config.js'
 import { Message, Notification } from 'element-ui'
 import { PageLocation } from '@/ts/dynamicLocation'
 import * as FILE_CONSTS from '@/ts/consts/fileConstants'
 import { Component, Vue, Watch } from 'vue-property-decorator'
+import Client from "@/request/client";
+import {get_token} from "@/ts/auth";
 
 @Component({
     components: {
@@ -404,8 +405,7 @@ export default class FileListView extends Vue {
         }
         const queryString = `path=${this.path}&${this.concatSortQuerys()}`
 
-        file_api
-            .getFileList(queryString)
+            Client.getFileList(queryString, get_token())
             .then((resp) => {
                 var filelist = resp.data
                 this.filelist = filelist
@@ -495,8 +495,8 @@ export default class FileListView extends Vue {
                     ),
                 )
 
-                file_api
-                    .upload(form)
+                Client
+                    .upload(form, get_token())
                     .then((resp) => {
                         console.log(resp)
                     })

@@ -29,6 +29,11 @@ export const constantRoutes: Array<RouteConfig> = [
         component: Layout,
         redirect: `${ROUTE_PATHS.PATH_LOGIN}`,
     },
+    {
+        path:'/404',
+        component: () => import('@/views/error/404.vue'),
+    },
+
 ]
 
 export const dynamicRoutes = [
@@ -49,7 +54,42 @@ export const dynamicRoutes = [
             },
         ],
     },
+
+
+    {
+        path:'*',
+        component: () => import('@/views/error/404.vue'),
+    }
 ]
+
+let logTag = "router/index\n"
+
+let wholeRoutes = constantRoutes.concat(dynamicRoutes)
+
+function normalizePath(path: string): string {
+    // Remove all leading and trailing slashes
+    let trimmedPath = path.replace(/^\/+|\/+$/g, '');
+
+    // Add single leading slash
+    return '/' + trimmedPath;
+}
+
+function gatherAllPaths(wholeRoutes: Array<RouteConfig>, parentPath: string = ''): string[] {
+    let paths: string[] = []
+    for (let route of wholeRoutes) {
+        let fullPath = parentPath + '/' + route.path;
+        if (route.children && route.children.length > 0) {
+            paths = paths.concat(gatherAllPaths(route.children, fullPath));
+        } else {
+            paths.push(normalizePath(fullPath));
+        }
+    }
+    return paths;
+}
+
+console.log(logTag, gatherAllPaths(wholeRoutes))
+
+export let  whiteListRoutesFullPath: string[] =  gatherAllPaths(constantRoutes)
 
 export let routes_for_sidebar = []
 
@@ -77,7 +117,7 @@ const createRouter = () =>
     new VueRouter({
         mode: 'history',
         base: process.env.BASE_URL,
-        routes: constantRoutes,
+        routes: constantRoutes.concat(dynamicRoutes),
     })
 
 const router = createRouter()

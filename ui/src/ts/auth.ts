@@ -101,10 +101,6 @@ function generateRoutes(menus, is_admin) {
             auth: false,
         })
     }
-    debugger
-    console.log(constantRoutes)
-    console.log(constantRoutes.concat(accessedRoutes))
-    set_routes_for_sidebar(constantRoutes.concat(accessedRoutes))
     return accessedRoutes
 }
 
@@ -157,18 +153,25 @@ function hasPermission(menus, route, routeFullPath) {
     })
 }
 
-export function process_user_menu(login_info) {
+export function processSideBarRoutes(login_info) {
     let apiTag = 'process_user_menu(): \n'
     let user_allow_menus = login_info.menus
     let is_super_admin = is_admin(login_info.roles)
     let permitRoutes = generateRoutes(user_allow_menus, is_super_admin)
-    console.log(apiTag, 'permitRoutes: ', permitRoutes)
-    resetRouter()
-    // permitRoutes.forEach((route) => {
-    //     router.addRoute(route)
-    // })
-    // router.addRoute()
-    router.addRoutes(permitRoutes)
+
+
+    // render sidebar routes
+    set_routes_for_sidebar(constantRoutes.concat(permitRoutes))
+
+    // //
+    //
+    // console.log(apiTag, 'permitRoutes: ', permitRoutes)
+    // resetRouter()
+    // // permitRoutes.forEach((route) => {
+    // //     router.addRoute(route)
+    // // })
+    // // router.addRoute()
+    // router.addRoutes(permitRoutes)
 }
 
 export function parse_user_info_response(user_info_resp) {

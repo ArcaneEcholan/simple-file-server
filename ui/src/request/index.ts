@@ -18,7 +18,7 @@
  const service = axios.create({
      baseURL: new PageLocation().baseURL, // url = base url + request url
      // withCredentials: true, // send cookies when cross-domain requests
-     timeout: 5000, // request timeout
+     timeout: 0, // request timeout
  });
 
  // request interceptor

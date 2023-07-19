@@ -1,4 +1,4 @@
-import router from '@/router/index'
+import router, {whiteListRoutesFullPath} from '@/router/index'
 import store from '@/store/index'
 import NProgress from 'nprogress' // progress bar
 import 'nprogress/nprogress.css' // progress bar style
@@ -6,7 +6,7 @@ import 'nprogress/nprogress.css' // progress bar style
 import {
     get_token,
     parse_user_info_response,
-    process_user_menu,
+    processSideBarRoutes,
 } from '@/ts/auth'
 import Client from '@/request/client'
 import {
@@ -14,6 +14,7 @@ import {
     USER_SET_LOGIN_INFO,
 } from '@/store/modules/user'
 import {getPageTitle} from '@/ts/utils';
+import {ROUTE_PATHS} from "@/ts/consts/routerPathConstants";
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
@@ -24,7 +25,6 @@ NProgress.configure({ showSpinner: false }) // NProgress Configuration
 router.beforeEach(async (to, from, next) => {
     let logTag = 'router.beforeEach(): \n'
     console.log(logTag, from, 'to', to)
-    debugger
     // start progress bar
     NProgress.start()
 
@@ -65,14 +65,29 @@ router.beforeEach(async (to, from, next) => {
         store.commit(USER_SET_LOGIN_INFO, login_info)
 
         // generate routes against user menus
-        process_user_menu(login_info)
+        processSideBarRoutes(login_info)
 
-        if (to.matched.length === 0) {
-            next({ path: to.fullPath })
-        } else {
-            next()
+        // check if current user has access to target path
+        let targetPath = to.fullPath
+        let whiteListRoutes = whiteListRoutesFullPath
+        let userAllowedGuardedRoutes:string[] = login_info.menus.map((menu) => menu.path)
+        function getUnion(array1:any, array2:any): any[] {
+            const mergedArray = array1.concat(array2);
+            return Array.from(new Set(mergedArray));
         }
-        return
+        let routesUserHasAccessTo: string[] = getUnion(whiteListRoutes, userAllowedGuardedRoutes)
+
+        let hasAccess = routesUserHasAccessTo.findIndex((route) => route === targetPath) !== -1
+
+        if(hasAccess) {
+            if (to.matched.length === 0) {
+                next({ path: to.fullPath })
+            } else {
+                next()
+            }
+        } else {
+            next(ROUTE_PATHS.PATH_404)
+        }
     })
 })
 

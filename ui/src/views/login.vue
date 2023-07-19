@@ -12,7 +12,7 @@ import Client from '@/request/client'
 import {
     get_token,
     parse_user_info_response,
-    process_user_menu,
+    processSideBarRoutes,
 } from '@/ts/auth'
 import store from '@/store'
 import { USER_SET_LOGIN_INFO, USER_SET_TOKEN } from '@/store/modules/user'
@@ -35,7 +35,6 @@ export default class LoginView extends Vue {
                     var token = resp.data
                     store.commit(USER_SET_TOKEN, token)
                     router.push(`${ROUTE_PATHS.PATH_FILELIST}`).then(failure => {
-                        debugger
                         if (isNavigationFailure(failure, NavigationFailureType.redirected)) {
                             // show a small notification to the user
                             alert('Login in order to access the admin panel')
@@ -59,7 +58,7 @@ export default class LoginView extends Vue {
         }
 
         if (store.state.user.login_info) {
-            process_user_menu(store.state.user.login_info)
+            processSideBarRoutes(store.state.user.login_info)
             next(`${ROUTE_PATHS.PATH_FILELIST}`).catch();
             return
         }
@@ -71,7 +70,7 @@ export default class LoginView extends Vue {
 
             // 保存信息到全局和本地
             store.commit(USER_SET_LOGIN_INFO, login_info)
-            process_user_menu(login_info)
+            processSideBarRoutes(login_info)
             next(`${ROUTE_PATHS.PATH_FILELIST}`).catch();
             return
         })
