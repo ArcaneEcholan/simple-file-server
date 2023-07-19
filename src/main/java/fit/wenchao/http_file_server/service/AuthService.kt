@@ -47,10 +47,15 @@ class AuthServiceImpl : AuthService {
         try {
             subject.login(shiroToken)
         } catch (e: Exception) {
-            throw AuthcException("Authentication failed", null)
+            throw AuthcException("Authentication failed", e)
         }
 
-        return SimpleEntity(token.getPrincipal(), token.getCredential()).apply { this.authenticated = true }
+        val principal = subject.principal as EntityIdentification
+
+        return SimpleEntity(
+            EntityPrincipalImpl().apply { this.value = principal.identification().toString() },
+            token.getCredential())
+            .apply { this.authenticated = true }
     }
 
     override fun authorize(entity: Entity, permissionsOfUri: PermissionCollection) {

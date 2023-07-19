@@ -6,6 +6,9 @@ import fit.wenchao.http_file_server.dao.po.RolePermissionPO
 import fit.wenchao.http_file_server.dao.po.UserPO
 import fit.wenchao.http_file_server.dao.po.UserRolePO
 import fit.wenchao.http_file_server.dao.repo.*
+import fit.wenchao.http_file_server.exception.BackendException
+import fit.wenchao.http_file_server.exception.RespCode
+import fit.wenchao.http_file_server.utils.JwtUtils
 import org.apache.shiro.authc.AuthenticationInfo
 import org.apache.shiro.authc.AuthenticationToken
 import org.apache.shiro.authc.BearerToken
@@ -169,19 +172,28 @@ class TokenRealm : AuthorizingRealm() {
 
     override fun doGetAuthenticationInfo(token: AuthenticationToken): AuthenticationInfo {
         var bearerToken = token as BearerToken
+
         var entityId: EntityIdentification? = getEntityIdFromToken(bearerToken)
-        entityId = authInfoAggregator.entityExists(entityId!!)
+        entityId?: throw AuthException("token invalid", null)
+
+        entityId = authInfoAggregator.entityExists(entityId)
         entityId?.let {
             return SimpleAuthenticationInfo(entityId, bearerToken.token, name)
         } ?: throw AuthcException("entity not exists", null)
     }
 
     fun getEntityIdFromToken(token: BearerToken): EntityIdentification {
+
+        val tokenValue = token.token
+
+        val userUid = JwtUtils.getIdFromToken(tokenValue)
+        userUid ?: throw BackendException(null, RespCode.TOKEN_INVALID)
+
         var toLong: Long? = null;
         try {
-            toLong = token.token.toLong()
+            toLong = userUid.toLong()
         } catch (e: NumberFormatException) {
-            throw AuthException("entity identification invalid", null)
+            throw AuthException("entity identification invalid", e)
         }
 
         return NumberEntityIdentification(toLong)

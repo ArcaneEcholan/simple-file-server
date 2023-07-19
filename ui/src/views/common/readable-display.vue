@@ -4,28 +4,25 @@
     </div>
 </template>
 
-<script>
-import { get_display_time, get_display_file_size } from '@/utils'
-export default {
-    props: {
-        value: '',
-        type: '',
-    },
-    data() {
-        return {}
-    },
-    computed: {
-        display_value() {
-            switch (this.type) {
-                case 'time':
-                    return get_display_time(new Date(this.value))
+<script lang="ts">
+import { get_display_time, get_display_file_size } from '@/ts/utils';
+import { Component, Vue, Prop } from 'vue-property-decorator';
+@Component({})
+export default class ReadableDisplayComponent extends Vue {
+    @Prop({ default: 0 })
+    value!: number;
+    @Prop({ default: '' })
+    type!: string;
 
-                case 'file-size':
-                    return get_display_file_size(this.value)
-                default:
-                    return ''
-            }
-        },
-    },
+    get display_value() {
+        switch (this.type) {
+            case 'time':
+                return get_display_time(new Date(this.value).getTime());
+            case 'file-size':
+                return get_display_file_size(this.value);
+            default:
+                return '';
+        }
+    }
 }
 </script>

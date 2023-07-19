@@ -1,0 +1,19 @@
+const PATH_NODE_FILELIST = 'filelist'
+const PATH_NODE_LOGIN = 'login'
+const PATH_NODE_SYSTEM_CONFIG = 'system-config'
+
+const PATH_LOGIN = `/${PATH_NODE_LOGIN}`
+const PATH_FILELIST = `/${PATH_NODE_FILELIST}`
+const PATH_SYSTEM_CONFIG = `/${PATH_NODE_SYSTEM_CONFIG}`
+
+export const ROUTE_PATH_NODES = {
+    PATH_NODE_FILELIST,
+    PATH_NODE_LOGIN,
+    PATH_NODE_SYSTEM_CONFIG
+}
+
+export const ROUTE_PATHS = {
+    PATH_LOGIN,
+    PATH_FILELIST,
+    PATH_SYSTEM_CONFIG
+}

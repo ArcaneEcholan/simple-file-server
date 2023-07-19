@@ -42,7 +42,7 @@ class JwtUtils : InitializingBean {
             return getClaimFromJWT(token, TOKEN_PAYLOAD_ID_ATTR)
         }
 
-        fun getUserIdFromToken(claims: Claims): Long? {
+        fun getEntityIdFromToken(claims: Claims): Long? {
             val userIdentity = claims.get(TOKEN_PAYLOAD_ID_ATTR, String::class.java)
             return userIdentity?.let { string2Long(it) }
         }

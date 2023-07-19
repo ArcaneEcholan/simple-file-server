@@ -7,10 +7,12 @@ import fit.wenchao.http_file_server.dao.repo.UserDao
 import fit.wenchao.http_file_server.rest.PermissionVO
 import fit.wenchao.http_file_server.rest.UserVO
 import org.springframework.stereotype.Service
+import java.io.Serializable
 
 interface UserService {
-    fun getUser(principal: String): UserPO?
-    fun getUserVO(principal: String): UserVO?
+    fun getUserByUsername(principal: String): UserPO?
+    fun getUserVOById(principal: Serializable): UserVO?
+    fun getUserById(id: Serializable): UserPO?
 }
 
 @Service
@@ -32,12 +34,14 @@ class UserServiceImpl : UserService {
         this.permissionDao = permissionDao
     }
 
-    override fun getUser(principal: String): UserPO? {
+    override fun getUserByUsername(principal: String): UserPO? {
        return userDao.getOne(QueryWrapper<UserPO>().eq("username", principal), false)
     }
 
-    override fun getUserVO(principal: String): UserVO? {
-        this.getUser(principal)?.let {
+    override fun getUserById(id: Serializable): UserPO? = userDao.getOne(QueryWrapper<UserPO>().eq("id", id), false)
+
+    override fun getUserVOById(principal: Serializable): UserVO? {
+        this.getUserById(principal)?.let {
             return UserVO().apply {
                 this.id = it.id
                 username = it.username

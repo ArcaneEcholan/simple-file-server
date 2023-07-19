@@ -3,6 +3,7 @@ package fit.wenchao.http_file_server.config
 import fit.wenchao.http_file_server.constants.API_PREFIX
 import fit.wenchao.http_file_server.interceptor.ApiLogInterceptor
 import fit.wenchao.http_file_server.interceptor.AuthcInterceptor
+import fit.wenchao.http_file_server.interceptor.PreflightInterceptor
 import fit.wenchao.http_file_server.service.TokenRealm
 import fit.wenchao.http_file_server.service.UsernamePasswordRealm
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager
@@ -45,7 +46,8 @@ class CORSConfiguration {
                 registry.addMapping("/**")
                     .allowedOrigins("*")
                     .allowedMethods("GET", "POST", "DELETE", "PUT", "OPTIONS", "PATCH")
-                    .allowCredentials(true).maxAge(3600)
+                    .allowCredentials(true)
+                    .maxAge(3600)
             }
         }
     }
@@ -63,6 +65,7 @@ class InterceptorConfig: WebMvcConfigurer {
     }
 
     private val youSeeAllInterceptors: List<Class<out HandlerInterceptor>> = mutableListOf(
+        PreflightInterceptor::class.java,
         ApiLogInterceptor::class.java,
         AuthcInterceptor::class.java)
 

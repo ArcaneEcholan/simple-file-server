@@ -70,16 +70,14 @@ class AuthController {
         val entity = authService.authenticate(token)
         val principal = entity.getPrincipal()
         log.debug { "Authentication successfully, principal: ${principal.value()}" }
-        var userId = userService.getUser(entity.getPrincipal().value())?.id
-        userId ?: throw BackendException(null, RespCode.AUTH_FAILED)
-        val genToken = JwtUtils.genToken(entity.getPrincipal().value(), EntityType.WEB_USER)
+        val genToken = JwtUtils.genToken(principal.value(), EntityType.WEB_USER)
         return genToken
     }
 
     @GetMapping(GET_USER_INFO)
     fun getUserInfo(httpServletRequest: HttpServletRequest): Any {
         val entity: Entity = threadAuthContext.getEntity()!!
-        val userVO: UserVO? = userService.getUserVO(entity.getPrincipal().value())
+        val userVO: UserVO? = userService.getUserVOById(entity.getPrincipal().value())
         userVO?: throw BackendException(null, RespCode.USER_NOT_FOUND)
         return userVO
     }

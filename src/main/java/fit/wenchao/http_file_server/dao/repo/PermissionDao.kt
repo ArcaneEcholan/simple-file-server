@@ -12,11 +12,11 @@ interface PermissionDao : IService<PermissionPO> {
 }
 
 @Repository
-class PermissionDaoImpl(var permissionDao: PermissionDao) :
+class PermissionDaoImpl(var permissionMapper: PermissionMapper) :
     ServiceImpl<PermissionMapper, PermissionPO>(), PermissionDao {
 
     override fun getOneByName(name: String): PermissionPO? {
-        val one = permissionDao.getOne(QueryWrapper<PermissionPO>().eq("name", name), false)
+        val one = permissionMapper.selectOne(QueryWrapper<PermissionPO>().eq("name", name))
         return one
     }
 }
