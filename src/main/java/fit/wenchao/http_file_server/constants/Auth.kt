@@ -4,5 +4,9 @@ class Auth {
 }
 
 enum class PermissionConstants {
-    SYSTEM_CONFIG
+    SYSTEM_CONFIG,
+    USER_ACCESS_DIRECTORY,
+    USER,
+    ROLE,
+    PERMISSION
 }

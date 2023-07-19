@@ -19,7 +19,7 @@ const val GET_USER_INFO = "/user-info"
 
 
 class UserVO {
-     var id: Long? = null
+    var id: Long? = null
 
     /**
      * user account, unique
@@ -30,17 +30,17 @@ class UserVO {
 }
 
 class PermissionVO {
-     var id: Long? = null
+    var id: Long? = null
 
     /**
      * permission name, unique
      */
-     var name: String? = null
+    var name: String? = null
 
     /**
      * permission description
      */
-     var desc: String? = null
+    var desc: String? = null
 }
 
 @RestController
@@ -56,9 +56,11 @@ class AuthController {
 
     var threadAuthContext: ThreadAuthContext
 
-    constructor(authService: AuthService,
-                userService: UserService,
-                threadAuthContext: ThreadAuthContext) {
+    constructor(
+        authService: AuthService,
+        userService: UserService,
+        threadAuthContext: ThreadAuthContext,
+    ) {
         this.authService = authService
         this.userService = userService
         this.threadAuthContext = threadAuthContext
@@ -67,18 +69,22 @@ class AuthController {
     @GetMapping(PATH_AUTH_USER)
     fun authUser(@NotEmpty username: String, @NotEmpty password: String): Any {
         var token = UsernamePasswordToken(username, password)
-        val entity = authService.authenticate(token)
-        val principal = entity.getPrincipal()
-        log.debug { "Authentication successfully, principal: ${principal.value()}" }
-        val genToken = JwtUtils.genToken(principal.value(), EntityType.WEB_USER)
-        return genToken
+        try {
+            val entity = authService.authenticate(token)
+            val principal = entity.getPrincipal()
+            log.debug { "Authentication successfully, principal: ${principal.value()}" }
+            val genToken = JwtUtils.genToken(principal.value(), EntityType.WEB_USER)
+            return genToken
+        } catch (e: AuthcException) {
+            throw BackendException(e, null, RespCode.AUTH_FAILED)
+        }
     }
 
     @GetMapping(GET_USER_INFO)
     fun getUserInfo(httpServletRequest: HttpServletRequest): Any {
         val entity: Entity = threadAuthContext.getEntity()!!
         val userVO: UserVO? = userService.getUserVOById(entity.getPrincipal().value())
-        userVO?: throw BackendException(null, RespCode.USER_NOT_FOUND)
+        userVO ?: throw BackendException(null, RespCode.USER_NOT_FOUND)
         return userVO
     }
 }

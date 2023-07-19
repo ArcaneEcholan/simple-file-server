@@ -1,50 +1,58 @@
-create table if not exists permission
+create table if not exists sfs.permission
 (
-    id     INT(10) auto_increment
+    id     int auto_increment
     primary key,
-    name   VARCHAR(255) null,
-    `desc` VARCHAR(255) null
+    name   varchar(255) null,
+    `desc` varchar(255) null
     );
 
-create table if not exists role
+create table if not exists sfs.role
 (
-    id     INT(10) auto_increment
+    id     int auto_increment
     primary key,
-    name   VARCHAR(255) null,
-    `desc` VARCHAR(255) null
+    name   varchar(255) null,
+    `desc` varchar(255) null
     );
 
-create table if not exists role_permission
+create table if not exists sfs.role_permission
 (
-    id            INT(10) auto_increment
+    id            int auto_increment
     primary key,
-    role_id       INT(10) null,
-    permission_id INT(10) null
+    role_id       int null,
+    permission_id int null
+);
+
+create table if not exists sfs.system_config
+(
+    id    int auto_increment
+    primary key,
+    `key` varchar(255) null,
+    value varchar(255) null
     );
 
-create table if not exists system_config
+create table if not exists sfs.user
 (
-    id    INT(10) auto_increment
+    id       int auto_increment
     primary key,
-    `key` VARCHAR(255) null,
-    value VARCHAR(255) null
+    username varchar(255) null,
+    password varchar(255) null,
+    ctime    varchar(255) null,
+    mtime    varchar(255) null
     );
 
-create table if not exists user
+create table if not exists sfs.user_acc_dir
 (
-    id       INT(10) auto_increment
+    id      int auto_increment
     primary key,
-    username VARCHAR(255) null,
-    password VARCHAR(255) null,
-    ctime    VARCHAR(255) null,
-    mtime    VARCHAR(255) null
-    );
+    user_id int  null,
+    acc_dir text null
+);
 
-create table if not exists user_role
+create table if not exists sfs.user_role
 (
-    id      INT(10) auto_increment
+    id      int auto_increment
     primary key,
-    user_id INT(10) null,
-    role_id INT(10) null
-    );
+    user_id int null,
+    role_id int null
+);
 

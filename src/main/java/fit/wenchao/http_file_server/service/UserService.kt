@@ -1,13 +1,50 @@
 package fit.wenchao.http_file_server.service
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper
+import fit.wenchao.http_file_server.dao.po.UserAccDirPO
 import fit.wenchao.http_file_server.dao.po.UserPO
 import fit.wenchao.http_file_server.dao.repo.PermissionDao
+import fit.wenchao.http_file_server.dao.repo.UserAccDirDao
 import fit.wenchao.http_file_server.dao.repo.UserDao
 import fit.wenchao.http_file_server.rest.PermissionVO
 import fit.wenchao.http_file_server.rest.UserVO
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import java.io.Serializable
+
+
+interface UserAccessDirectoryService {
+    fun getUserAccessDirectory(userId: Serializable): String?
+    fun userHasAccessTo(userId: Serializable, directory: String): Boolean
+    fun assignDirectoryTo(userId: Serializable, directory: String)
+}
+
+@Component
+class UserAccessDirectoryServiceImpl(var userAccDirDao: UserAccDirDao) : UserAccessDirectoryService {
+
+    override fun getUserAccessDirectory(userId: Serializable): String? {
+        val one: UserAccDirPO? = userAccDirDao.getOne(QueryWrapper<UserAccDirPO>().eq("user_id", userId), false)
+        return one?.accDir
+    }
+
+    override fun userHasAccessTo(userId: Serializable, directory: String): Boolean {
+        getUserAccessDirectory(userId)?.let {
+            return it == directory
+        } ?: return false
+    }
+
+    override fun assignDirectoryTo(userId: Serializable, directory: String) {
+        val one = userAccDirDao.getOne(QueryWrapper<UserAccDirPO>().eq("user_id", userId), false)
+        if (one == null) {
+            userAccDirDao.save(UserAccDirPO(null, userId as Long, directory))
+        } else {
+            one.accDir = directory
+            userAccDirDao.updateById(one)
+        }
+    }
+
+}
+
 
 interface UserService {
     fun getUserByUsername(principal: String): UserPO?

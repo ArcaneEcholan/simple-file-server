@@ -1,5 +1,7 @@
 package fit.wenchao.http_file_server.interceptor
 
+import fit.wenchao.http_file_server.exception.BackendException
+import fit.wenchao.http_file_server.exception.RespCode
 import fit.wenchao.http_file_server.service.*
 import mu.KotlinLogging
 import org.springframework.stereotype.Component
@@ -31,21 +33,28 @@ class AuthcInterceptor: HandlerInterceptor {
 
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        // auth first
-        val token = getTokenFromRequestQueryOrHeader(request)
+        try {
+            // auth first
+            val token = getTokenFromRequestQueryOrHeader(request)
 
-        var entity: Entity = authService.authenticate(token);
+            var entity: Entity = authService.authenticate(token);
 
-        threadAuthContext.bind(entity)
+            threadAuthContext.bind(entity)
 
-        var entryPoint = SpringHandlerMethodRequestEntryPoint(handlerMethod = handler as HandlerMethod)
+            var entryPoint = SpringHandlerMethodRequestEntryPoint(handlerMethod = handler as HandlerMethod)
 
-        // authorize then
-        authService.authorize(entity, entryPoint.getRequiredPermissions())
+            // authorize then
+            authService.authorize(entity, entryPoint.getRequiredPermissions())
 
-        log.info { "Authentication succeeded, entity id: ${entity.getPrincipal()}" }
+            log.info { "Authentication succeeded, entity id: ${entity.getPrincipal()}" }
 
-        return true
+            return true
+        } catch (e: AuthcException) {
+            throw BackendException(e, null, RespCode.AUTH_FAILED)
+        }catch (e: AuthzException) {
+            throw BackendException(e, null, RespCode.PERMISSION_INADEQUATE)
+        }
+
     }
 
     /*

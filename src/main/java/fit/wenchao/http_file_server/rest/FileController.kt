@@ -12,11 +12,12 @@ import fit.wenchao.http_file_server.model.vo.FileInfo
 import fit.wenchao.http_file_server.model.vo.UploadFileInfo
 import fit.wenchao.http_file_server.rest.fileFilters.*
 import fit.wenchao.http_file_server.service.FileService
+import fit.wenchao.http_file_server.service.ThreadAuthContext
+import fit.wenchao.http_file_server.service.UserAccessDirectoryService
 import fit.wenchao.http_file_server.utils.FilePathBuilder
 import fit.wenchao.http_file_server.utils.ResponseEntityUtils
 import fit.wenchao.http_file_server.utils.iflet
 import org.apache.commons.io.IOUtils
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -102,45 +103,29 @@ data class QueryFilesOptVO(
 @Validated
 @RestController
 @RequestMapping(API_PREFIX)
-class FileController {
+class FileController(
+    var appCtx: ApplicationContext,
+    var configFile: ConfigFile,
+    var fileService: FileService,
+    var userAccessDirectoryService: UserAccessDirectoryService,
+    var threadAuthContext: ThreadAuthContext
+) {
 
-    @Autowired
-    lateinit var appCtx: ApplicationContext
-
-    @Autowired
-    lateinit var configFile: ConfigFile
-
-
-    @Autowired
-    lateinit var fileService: FileService;
-
-    @GetMapping("/ping")
-    fun test() : String {
-        return "pong"
+    fun getRootPath(): String? {
+        val entityId = threadAuthContext.getEntity()!!.getPrincipal().value()
+        var root = userAccessDirectoryService.getUserAccessDirectory(entityId)
+        return root
     }
-
-    fun getRootPath(): String {
-        var root: String? = configFile.getProp("root")
-
-        if ("" == root) {
-            root = System.getProperty("user.home")
-        }
-
-        return root ?: ""
-    }
-
-
 
     @GetMapping("/file-list")
     fun getFileList(@RequestParam optsMap: MutableMap<String, String>, @NotBlank path: String): ResponseEntity<JsonResult> {
-
 
         // we get the filter options first
         var filterOptList = resolveFileListFilterOptions(optsMap)
 
         var filePath = path
         val rootPath = getRootPath()
-        if (rootPath == "") {
+        if (rootPath == "" || rootPath == null) {
             throw BackendException(rootPath, RespCode.ROOT_PATH_CONFIG_ERROR)
         }
         filePath = FilePathBuilder.ofPath()
@@ -168,7 +153,7 @@ class FileController {
 
         var filePath = path
         val rootPath = getRootPath()
-        if (rootPath == "") {
+        if (rootPath == "" || rootPath == null) {
             throw BackendException(rootPath, RespCode.ROOT_PATH_CONFIG_ERROR)
         }
 
@@ -263,6 +248,9 @@ class FileController {
 
         // build the absolute path
         val rootPath = getRootPath()
+        if (rootPath == "" || rootPath == null) {
+            throw BackendException(rootPath, RespCode.ROOT_PATH_CONFIG_ERROR)
+        }
         path = FilePathBuilder.ofPath()
             .ct(rootPath)
             .ct(path)

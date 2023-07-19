@@ -57,6 +57,8 @@ interface AuthInfoAggregator {
      * @return the permissions of the entity
      */
     fun getEntityPermissions(id: EntityIdentification): PermissionCollection
+
+
 }
 
 @Component
@@ -101,6 +103,12 @@ class AuthInfoAggregatorImpl : AuthInfoAggregator {
     }
 
     override fun getEntityPermissions(id: EntityIdentification): PermissionCollection {
+        val entityRoles = this.getEntityRoles(id)
+        val isSuperAdmin = entityRoles.filter { it.toString() == "super-admin" }.size == 1
+        if(isSuperAdmin) {
+            return getAllPermissions()
+        }
+
         var permCollection = PermissionCollectionImpl()
         getEntityRoles(id).forEach { role ->
             var perms: PermissionCollection = roleDao.getOne(QueryWrapper<RolePO>().eq("name", role.toString()), false)
@@ -116,6 +124,12 @@ class AuthInfoAggregatorImpl : AuthInfoAggregator {
         }
 
         return permCollection
+    }
+
+ fun getAllPermissions(): PermissionCollection {
+        permissionDao.list().mapNotNull { SimplePermission(it.name !!) }.toMutableList().let {
+            return PermissionCollectionImpl().apply { this.list.addAll(it) }
+        }
     }
 
 }
@@ -203,9 +217,8 @@ class TokenRealm : AuthorizingRealm() {
 
         var entityIdentification = principals.primaryPrincipal as EntityIdentification
 
-        val entityPermissions = authInfoAggregator.getEntityPermissions(entityIdentification)
-
         val entityRoles = authInfoAggregator.getEntityRoles(entityIdentification)
+        val entityPermissions = authInfoAggregator.getEntityPermissions(entityIdentification)
 
         val authorizationInfo = SimpleAuthorizationInfo()
         authorizationInfo.roles = entityRoles.map { it.toString() }.toSet()

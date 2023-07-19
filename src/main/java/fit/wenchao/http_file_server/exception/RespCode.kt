@@ -8,7 +8,7 @@ enum class RespCode(
     SERVER_ERROR("server error"),
 
     NO_FILE("file not found"),
-
+    PERMISSION_INADEQUATE("permission inadequate"),
 
     FRONT_END_PARAMS_ERROR("front end param error"),
 
@@ -17,6 +17,8 @@ enum class RespCode(
     TOKEN_EXPIRED("token expired"),
     TOKEN_INVALID("token invalid"),
     USER_NOT_FOUND("user not found"),
+
+    NO_ACCESS_TO_DIR("no access to dir"),
 
     ///////////////////////// file upload ////////////////////////////
     UPLOAD_FILE_SIZE_EXCEED_UPPER_LIMIT("upload file size too large"),
