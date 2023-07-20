@@ -1,21 +1,17 @@
 package fit.wenchao.http_file_server;
 
+import fit.wenchao.db.generator.Generator;
 import fit.wenchao.http_file_server.constants.CommonConsts;
 import fit.wenchao.http_file_server.utils.FilePathBuilder;
-import org.apache.tomcat.util.modeler.ParameterInfo;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static fit.wenchao.http_file_server.utils.StrUtils.filePathBuilder;
 
 @Component
 public class ConfigFile {
@@ -28,10 +24,6 @@ public class ConfigFile {
                            .ct(CommonConsts.CONFIG_FILE_NAME)
                            .build();
 
-    public String getConfigFilePath() {
-        return configFilePath;
-    }
-
     public boolean exists() {
         return Files.exists(Paths.get(configFilePath));
     }
@@ -40,7 +32,6 @@ public class ConfigFile {
      * Create config file if it's not exists.
      */
     public synchronized void create() {
-
         File configFile = new File(configFilePath);
 
         // create config file in the java running directory if the config
@@ -150,6 +141,11 @@ public class ConfigFile {
      */
     public String getProp(String key) {
         Map<String, String> configMap = listConfigurations();
+        //return null;
+        String s = configMap.get(key);
+        if (s == null) {
+            s = "";
+        }
         return configMap.get(key);
     }
 
@@ -188,7 +184,6 @@ public class ConfigFile {
                 }
 
                 String lineKey = lineKeyAndValue.getKey();
-                String lineValue = lineKeyAndValue.getValue();
 
                 // if current line is the target line, change the value and
                 // put the line into buffer

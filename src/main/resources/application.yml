@@ -1,3 +1,9 @@
+datasource-host: localhost
+datasource-port: 33061
+datasource-username: root
+datasource-password: wc123456
+datasource-db: sfs
+
 spring:
   servlet:
     # limit upload file size, if the limit is exceeded, MaxUploadSizeExceededException will be thrown
@@ -5,11 +11,30 @@ spring:
       max-file-size: 2100MB
       max-request-size: 2100MB
 
+  datasource:
+    url: jdbc:mysql://${datasource-host}:${datasource-port}/${datasource-db}?useUnicode=true&characterEncoding=UTF-8&useSSL=false
+    username: ${datasource-username}
+    password: ${datasource-password}
+    schema: classpath:sql/schema.sql
+    initialization-mode: always
+
+  main:
+    banner-mode: off
 
 logging:
   level:
     root: debug
+    com.zaxxer.hikari: info
+    sun.rmi: info
+    org:
+      springframework:
+        boot:
+          autoconfigure:
+            logging: info
 
+mybatis-plus:
+  global-config:
+    banner: off
 
 server:
-  port: 8002
+  port: 8088

@@ -1,0 +1,27 @@
+const PATH_NODE_FILELIST = 'filelist'
+const PATH_NODE_LOGIN = 'login'
+const PATH_NODE_404 = '404'
+const PATH_NODE_USER = 'user'
+const PATH_NODE_SYSTEM_CONFIG = 'system-config'
+
+const PATH_USER = `/${PATH_NODE_USER}`
+const PATH_LOGIN = `/${PATH_NODE_LOGIN}`
+const PATH_404 = `/${PATH_NODE_404}`
+const PATH_FILELIST = `/${PATH_NODE_FILELIST}`
+const PATH_SYSTEM_CONFIG = `/${PATH_NODE_SYSTEM_CONFIG}`
+
+export const ROUTE_PATH_NODES = {
+    PATH_NODE_USER,
+    PATH_NODE_404,
+    PATH_NODE_FILELIST,
+    PATH_NODE_LOGIN,
+    PATH_NODE_SYSTEM_CONFIG
+}
+
+export const ROUTE_PATHS = {
+    PATH_USER,
+    PATH_404,
+    PATH_LOGIN,
+    PATH_FILELIST,
+    PATH_SYSTEM_CONFIG
+}

@@ -1,7 +1,5 @@
 package fit.wenchao.http_file_server;
 
-import org.springframework.boot.system.SystemProperties;
-
 public class SystemProperty {
     private static final SystemProperty singleton
             = new SystemProperty();
@@ -24,7 +22,5 @@ public class SystemProperty {
     public static void main(String[] args) {
         System.out.println(SystemProperty.getSingleton().getCurDir());
         System.out.println(SystemProperty.getSingleton().getTempDir());
-
-
     }
 }
