@@ -467,7 +467,7 @@ export default class FileListView extends Vue {
         // check file size
         // fetch file size limit first
         config_api
-            .getConfigValue('max-upload-size')
+            .getConfigValue('max-upload-size', get_token())
             .then((resp) => {
                 const limit_size = resp.data
                 const filesize = file.size

@@ -1,27 +1,30 @@
 import request from '@/utils/request'
 
-export function updateConfig(key, value) {
-  return request({
-    url: '/config',
-    method: 'put',
-    params: {
-      key,
-      value
-    }
-  })
+export function updateConfig(key, value, token) {
+    return request({
+        url: '/config',
+        method: 'put',
+        params: {
+            key,
+            value
+        },
+        headers: {'entity-token': token},
+    })
 }
 
-export function listConfig() {
-  return request({
-    url: '/config/list',
-    method: 'get'
-  })
+export function listConfig(token) {
+    return request({
+        url: '/config/list',
+        method: 'get',
+        headers: {'entity-token': token},
+    })
 }
 
-export function getConfigValue(key) {
-  return request({
-    url: '/config',
-    method: 'get',
-    params: { key }
-  })
+export function getConfigValue(key, token) {
+    return request({
+        url: '/config',
+        method: 'get',
+        params: {key},
+        headers: {'entity-token': token},
+    })
 }

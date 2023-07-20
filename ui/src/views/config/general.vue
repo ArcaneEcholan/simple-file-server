@@ -58,6 +58,7 @@
 <script>
 import * as configApi from '@/api/config';
 import { Message } from 'element-ui';
+import {get_token} from "@/ts/auth";
 export default {
     components: {},
     data() {
@@ -94,7 +95,7 @@ export default {
         // fetch the value of first key
         key = this.config_list[0].key;
         let promise = Promise.resolve().then(() => {
-            return configApi.getConfigValue(key);
+            return configApi.getConfigValue(key, get_token());
         });
 
         // iterarte keys to fetch value
@@ -111,7 +112,7 @@ export default {
                 // prepare next key to deal with
                 key = this.config_list[i].key;
                 // fetch next value of key
-                return configApi.getConfigValue(key);
+                return configApi.getConfigValue(key, get_token());
             });
         }
 
@@ -145,7 +146,7 @@ export default {
     methods: {
         submit_config(key, value) {
             configApi
-                .updateConfig(key, value)
+                .updateConfig(key, value, get_token())
                 .then((resp) => {
                     Message.success('bing go');
                 })
