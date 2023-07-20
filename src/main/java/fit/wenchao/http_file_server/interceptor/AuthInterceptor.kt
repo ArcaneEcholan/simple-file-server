@@ -45,7 +45,11 @@ class AuthcInterceptor : HandlerInterceptor {
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
 
-        var methodHandler = handler as HandlerMethod
+        if(handler !is HandlerMethod) {
+            return true
+        }
+
+        var methodHandler = handler
         val methodAnnotation = methodHandler.getMethodAnnotation(AuthLogin::class.java)
         methodAnnotation ?: return true
 

@@ -31,7 +31,7 @@ else
   echo "Folder $DIST does not exist."
 fi
 
-npm run build
+npm run build:pro
 
 # Define the source and destination paths
 SOURCE="$UI_ROOT/dist"

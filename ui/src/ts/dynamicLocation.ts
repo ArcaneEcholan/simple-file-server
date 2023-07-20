@@ -39,7 +39,7 @@ export class PageLocation {
         return {
             baseURL: 'http://localhost:8088/api',
             // baseURL: 'http://172.27.128.180:8088/api',
-            hardCode: true,
+            hardCode: false,
         }
     }
 }

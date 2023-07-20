@@ -3,8 +3,11 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-
+**/static
 node_modules/
+nohup.out
+**/mvnw*
+
 
 ### STS ###
 .apt_generated
