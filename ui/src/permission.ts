@@ -68,7 +68,7 @@ router.beforeEach(async (to, from, next) => {
         processSideBarRoutes(login_info)
 
         // check if current user has access to target path
-        let targetPath = to.fullPath
+        let targetPath = to.path
         let whiteListRoutes = whiteListRoutesFullPath
         let userAllowedGuardedRoutes:string[] = login_info.menus.map((menu) => menu.path)
         function getUnion(array1:any, array2:any): any[] {

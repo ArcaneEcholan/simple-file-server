@@ -102,6 +102,30 @@ class Client {
     }
 
     // endregion
+    static assignDirectoryTo(userId: number, directory: string, token: string) {
+        return request({
+            url: `/user-access-directory`,
+            method: 'put',
+            data: {
+                userId,
+                directory,
+            },
+            headers: {
+                'entity-token': token
+            }
+        })
+
+    }
+
+    static getUserList(token: string) {
+        return request({
+            url: `/users`,
+            method: 'get',
+            headers: {
+                'entity-token': token
+            }
+        })
+    }
 }
 
 export default Client

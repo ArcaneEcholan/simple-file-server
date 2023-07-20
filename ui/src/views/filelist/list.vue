@@ -410,14 +410,6 @@ export default class FileListView extends Vue {
                 var filelist = resp.data
                 this.filelist = filelist
             })
-            .catch((resp) => {
-                if (resp.code === 'NO_FILE') {
-                    Message.warning(
-                        'File Not Found, please configure the correct root path',
-                    )
-                    return
-                }
-            })
     }
 
     /**

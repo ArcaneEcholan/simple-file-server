@@ -66,7 +66,6 @@ class FileListFilterOptsVO {
             // default type is SINGLE, Only support SINGLE now
             val confirmedType = type ?: FilterType.SINGLE.name
 
-
             if (confirmedType == FilterType.SINGLE.name) {
                 val filterCondition = QueryFilesOption()
                 filterCondition.key = key
@@ -81,7 +80,6 @@ class FileListFilterOptsVO {
 
             // unknown filter type
             return@forEach
-
         }
 
         // we sort them in a preset way
@@ -134,7 +132,12 @@ class FileController(
             .ct(filePath)
             .build()
 
-        var fileInfos: MutableList<FileInfo> = fileService.listFiles(filePath)
+        var fileInfos: MutableList<FileInfo>
+        try {
+            fileInfos = fileService.listFiles(filePath)
+        }catch ( e: Exception){
+            throw BackendException(null as Any?, rootPath, RespCode.ROOT_PATH_CONFIG_ERROR.getCode())
+        }
 
         // we apply them to file list
         filterOptList.forEach { filterCondition ->
@@ -145,6 +148,8 @@ class FileController(
         }
 
         return ResponseEntityUtils.ok(JsonResult.ok(fileInfos))
+
+
     }
 
     @AuthLogin

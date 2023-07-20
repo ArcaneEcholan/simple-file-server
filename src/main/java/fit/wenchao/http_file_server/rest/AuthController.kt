@@ -27,6 +27,8 @@ class UserVO {
     var username: String? = null
 
     var perms: MutableList<PermissionVO>? = null
+
+    var accDir: String? = null
 }
 
 class PermissionVO {

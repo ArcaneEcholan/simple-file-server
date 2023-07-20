@@ -25,6 +25,7 @@ interface UserAccessDirectoryController {
 
     fun getUserAccessDirectory(): String
 
+    @PutMapping(ASSIGN_USER_ACCESS_DIRECTORY)
     @PermissionRequired([PermissionConstants.USER_ACCESS_DIRECTORY])
     fun assignDirectoryTo(assignUserAccessDirectoryRequest: AssignUserAccessDirectoryRequest):
             Any
@@ -85,7 +86,7 @@ class UserAccessDirectoryControllerImpl(
         return userAccessDirectory ?: ""
     }
 
-    @PutMapping(ASSIGN_USER_ACCESS_DIRECTORY)
+
     override fun assignDirectoryTo(
         @RequestBody assignUserAccessDirectoryRequest: AssignUserAccessDirectoryRequest,
     ): Any {

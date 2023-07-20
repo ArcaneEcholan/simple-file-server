@@ -19,4 +19,5 @@ export const PERM_MAPPING = {
 export const PERM_PAGE_MAPPING = {
     LOGIN: [],
     SYSTEM_CONFIG: [ROUTE_PATHS.PATH_SYSTEM_CONFIG],
+    USER: [ROUTE_PATHS.PATH_USER],
 };

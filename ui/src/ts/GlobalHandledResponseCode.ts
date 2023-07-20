@@ -36,6 +36,9 @@ class GlobalHandledRespCode {
             },
             FILE_SYSTEM_ERROR: (code: string, msg: string) => {
                 Notification.error(msg);
+            },
+            ROOT_PATH_CONFIG_ERROR: (code: string, msg: string) => {
+                Notification.error(`${code}: ${msg}`);
             }
         };
     }

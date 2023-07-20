@@ -1,11 +1,11 @@
 import Vue from 'vue'
-import VueRouter, {RouteConfig} from 'vue-router'
+import VueRouter, { RouteConfig } from 'vue-router'
 
 Vue.use(VueRouter)
 
 /* Layout */
 import Layout from '@/layout/index.vue'
-import {ROUTE_PATHS} from '@/ts/consts/routerPathConstants'
+import { ROUTE_PATHS } from '@/ts/consts/routerPathConstants'
 
 export const constantRoutes: Array<RouteConfig> = [
     {
@@ -20,7 +20,7 @@ export const constantRoutes: Array<RouteConfig> = [
                 path: '',
                 component: () => import('@/views/filelist/list.vue'),
                 name: 'FileList',
-                meta: {title: 'FileList'},
+                meta: { title: 'FileList' },
             },
         ],
     },
@@ -30,7 +30,7 @@ export const constantRoutes: Array<RouteConfig> = [
         redirect: `${ROUTE_PATHS.PATH_LOGIN}`,
     },
     {
-        path:'/404',
+        path: '/404',
         component: () => import('@/views/error/404.vue'),
     },
 
@@ -55,15 +55,31 @@ export const dynamicRoutes = [
             },
         ],
     },
-
-
     {
-        path:'*',
+        path: `${ROUTE_PATHS.PATH_USER}`,
+         component: Layout,
+         alwaysShow: false,
+         meta: {
+            title: `user`,
+        },
+         children: [
+            {
+                path: ``,
+                component: () => import(`@/views/user/index.vue`),
+                meta: {
+                    title: `User`,
+                    breadcrumb: false
+                }
+            }
+        ]
+    },
+    {
+        path: '*',
         component: () => import('@/views/error/404.vue'),
     }
 ]
 
-let logTag = "router/index\n"
+let logTag = 'router/index\n'
 
 let wholeRoutes = constantRoutes.concat(dynamicRoutes)
 
@@ -75,7 +91,7 @@ function normalizePath(path: string): string {
     return '/' + trimmedPath;
 }
 
-function gatherAllPaths(wholeRoutes: Array<RouteConfig>, parentPath: string = ''): string[] {
+function gatherAllPaths(wholeRoutes: Array<RouteConfig>, parentPath = ''): string[] {
     let paths: string[] = []
     for (let route of wholeRoutes) {
         let fullPath = parentPath + '/' + route.path;
@@ -90,7 +106,7 @@ function gatherAllPaths(wholeRoutes: Array<RouteConfig>, parentPath: string = ''
 
 console.log(logTag, gatherAllPaths(wholeRoutes))
 
-export let  whiteListRoutesFullPath: string[] =  gatherAllPaths(constantRoutes)
+export let whiteListRoutesFullPath: string[] = gatherAllPaths(constantRoutes)
 
 export let routes_for_sidebar = []
 

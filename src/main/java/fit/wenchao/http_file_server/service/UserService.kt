@@ -60,20 +60,25 @@ class UserServiceImpl : UserService {
 
     var permissionDao: PermissionDao
 
+
+    var userAccessDirectoryService: UserAccessDirectoryService
+
     private final val authInfoAggregator: AuthInfoAggregator
 
     constructor(
         userDao: UserDao,
         authInfoAggregator: AuthInfoAggregator,
-        permissionDao: PermissionDao
+        permissionDao: PermissionDao,
+        userAccessDirectoryService: UserAccessDirectoryService,
     ) {
         this.userDao = userDao
         this.authInfoAggregator = authInfoAggregator
         this.permissionDao = permissionDao
+        this.userAccessDirectoryService = userAccessDirectoryService
     }
 
     override fun getUserByUsername(principal: String): UserPO? {
-       return userDao.getOne(QueryWrapper<UserPO>().eq("username", principal), false)
+        return userDao.getOne(QueryWrapper<UserPO>().eq("username", principal), false)
     }
 
     override fun getUserById(id: Serializable): UserPO? = userDao.getOne(QueryWrapper<UserPO>().eq("id", id), false)
@@ -96,13 +101,15 @@ class UserServiceImpl : UserService {
                         val oneByName = permissionDao.getOneByName(name)
                         oneByName?.let {
                             PermissionVO().apply {
-                                this. id = it.id
+                                this.id = it.id
                                 this.name = it.name
                                 this.desc = it.desc
                             }
                         }
                     }.filterNotNull().toMutableList()
                 perms = toMutableList
+
+                this.accDir = userAccessDirectoryService.getUserAccessDirectory(it.id!!)
             }
         } ?: return null
     }
