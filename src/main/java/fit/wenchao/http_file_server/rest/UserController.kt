@@ -6,6 +6,7 @@ import fit.wenchao.http_file_server.exception.JsonResult
 import fit.wenchao.http_file_server.service.PermissionRequired
 import fit.wenchao.http_file_server.service.ThreadAuthContext
 import fit.wenchao.http_file_server.service.UserAccessDirectoryService
+import fit.wenchao.http_file_server.service.UserService
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import javax.validation.constraints.NotEmpty
@@ -31,6 +32,7 @@ interface UserAccessDirectoryController {
 
 interface UserController {
 
+    @GetMapping("/users")
     @PermissionRequired([PermissionConstants.USER])
     fun getUsers(): List<UserVO>
 
@@ -94,5 +96,24 @@ class UserAccessDirectoryControllerImpl(
 
         return JsonResult.ok()
     }
+}
+
+@RestController
+@Validated
+@RequestMapping(API_PREFIX)
+class UserControllerImpl(var userService: UserService) : UserController {
+
+    override fun getUsers(): List<UserVO> {
+      return userService.listAll()
+    }
+
+    override fun getUserRoles(): List<RoleVO> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getUserPermissions(): List<PermissionVO> {
+        TODO("Not yet implemented")
+    }
+
 }
 

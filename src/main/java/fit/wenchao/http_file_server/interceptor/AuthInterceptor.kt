@@ -16,6 +16,7 @@ class AuthExceptionThreadLocal {
     fun get(): Throwable? {
         return tl.get()
     }
+
     fun set(e: Throwable?) {
         return tl.set(e)
     }
@@ -24,14 +25,14 @@ class AuthExceptionThreadLocal {
 const val THREAD_LOCAL_AUTH_EXCEPTION = "THREAD_LOCAL_AUTH_EXCEPTION"
 
 @Component
-class AuthcInterceptor: HandlerInterceptor {
+class AuthcInterceptor : HandlerInterceptor {
 
 
     private val log = KotlinLogging.logger {}
 
-     var authService: AuthService
+    var authService: AuthService
 
-     var threadAuthContext: ThreadAuthContext
+    var threadAuthContext: ThreadAuthContext
 
     constructor(
         authService: AuthService,
@@ -60,20 +61,20 @@ class AuthcInterceptor: HandlerInterceptor {
 
             return true
         } catch (e: AuthcException) {
-            if(e.message == AuthErrorCode.TOKEN_INVALID.name)
+            if (e.message == AuthErrorCode.TOKEN_INVALID.name)
                 throw BackendException(e, null, RespCode.AUTH_FAILED)
-            else if(e.message == AuthErrorCode.TOKEN_EXPIRED.name)
+            else if (e.message == AuthErrorCode.TOKEN_EXPIRED.name)
                 throw BackendException(e, null, RespCode.TOKEN_EXPIRED)
-            else if(e.message == AuthErrorCode.UNSUPPORTED_TOKEN_TYPE.name)
+            else if (e.message == AuthErrorCode.UNSUPPORTED_TOKEN_TYPE.name)
                 throw BackendException(e, null, RespCode.TOKEN_INVALID)
-            else if(e.message == AuthErrorCode.ENTITY_NOT_EXISTED.name)
+            else if (e.message == AuthErrorCode.ENTITY_NOT_EXISTED.name)
                 throw BackendException(e, null, RespCode.USER_NOT_FOUND)
-            else if(e.message == AuthErrorCode.AUTHC_ERROR.name)
+            else if (e.message == AuthErrorCode.AUTHC_ERROR.name)
                 throw BackendException(e, null, RespCode.AUTH_FAILED)
             else
                 throw BackendException(e, null, RespCode.AUTH_FAILED)
-        }catch (e: AuthzException) {
-            if(e.message == AuthErrorCode.ENTITY_NOT_AUTHCED.name)
+        } catch (e: AuthzException) {
+            if (e.message == AuthErrorCode.ENTITY_NOT_AUTHCED.name)
                 throw BackendException(e, null, RespCode.SERVER_ERROR)
             else
                 throw BackendException(e, null, RespCode.PERMISSION_INADEQUATE)
@@ -91,7 +92,6 @@ class AuthcInterceptor: HandlerInterceptor {
     }
 
 
-
     // get token from request
     private fun getTokenFromRequestQueryOrHeader(request: HttpServletRequest): TokenToken {
 
@@ -99,10 +99,10 @@ class AuthcInterceptor: HandlerInterceptor {
 
         var tokenKey = "entity-token"
 
-        var entityTokenInQuery:String? = request.getParameter(tokenKey)
-        var entityTokenInHeader:String? = request.getHeader(tokenKey)
+        var entityTokenInQuery: String? = request.getParameter(tokenKey)
+        var entityTokenInHeader: String? = request.getHeader(tokenKey)
 
-        var token =  entityTokenInQuery ?: entityTokenInHeader
+        var token = entityTokenInQuery ?: entityTokenInHeader
 
 
         token ?: run { throw RuntimeException("token missing") }

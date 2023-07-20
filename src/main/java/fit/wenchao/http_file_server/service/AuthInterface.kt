@@ -1,6 +1,7 @@
 package fit.wenchao.http_file_server.service
 
 import fit.wenchao.http_file_server.constants.PermissionConstants
+import org.apache.shiro.authz.permission.WildcardPermission
 import org.apache.shiro.authz.permission.WildcardPermissionResolver
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
@@ -176,7 +177,7 @@ class PermissionCollectionImpl : PermissionCollection {
     }
 
     override fun getShiroPermissions(): List<org.apache.shiro.authz.Permission> {
-        list.map { permissionResolver.resolvePermission(it.toString()) }.toList().let { return it }
+        list.map { WildcardPermission(it.toString(), false) }.toList().let { return it }
     }
 
     override fun merge(perms: PermissionCollection) {
@@ -212,8 +213,15 @@ interface RequestEntryPoint {
     fun getRequiredPermissions(): PermissionCollection
 }
 
-annotation class PermissionRequired(val value: Array<PermissionConstants>) {
+
+enum class Logical {
+    AND, OR
 }
+
+annotation class PermissionRequired(
+    val value: Array<PermissionConstants>,
+    val logical: Logical = Logical.OR)
+
 
 
 class SpringHandlerMethodRequestEntryPoint : RequestEntryPoint {

@@ -135,27 +135,8 @@ class AuthInfoAggregatorImpl : AuthInfoAggregator {
 
 }
 
-/**
- * Realm for username and password authentication
- */
-class UsernamePasswordRealm(var authExceptionThreadLocal: AuthExceptionThreadLocal, var authInfoAggregator: AuthInfoAggregator) : AuthorizingRealm() {
-
-
-    override fun supports(token: AuthenticationToken?): Boolean {
-        return token != null && token is org.apache.shiro.authc.UsernamePasswordToken
-    }
-
-    override fun doGetAuthenticationInfo(token: AuthenticationToken?): AuthenticationInfo {
-        var usernamePasswordToken = token as org.apache.shiro.authc.UsernamePasswordToken
-        var entityId: EntityIdentification? =
-            authInfoAggregator.entityExists(usernamePasswordToken.username, String(usernamePasswordToken.password))
-        entityId?.let {
-            return SimpleAuthenticationInfo(entityId, usernamePasswordToken.password, name)
-        } ?: run {
-            authExceptionThreadLocal.set(AuthcException(AuthErrorCode.ENTITY_NOT_EXISTED.name, null))
-            throw RuntimeException()
-        }
-    }
+abstract class BaseRealm(var authInfoAggregator: AuthInfoAggregator) : AuthorizingRealm() {
+    abstract override fun doGetAuthenticationInfo(token: AuthenticationToken): AuthenticationInfo
 
     override fun doGetAuthorizationInfo(principals: PrincipalCollection): AuthorizationInfo {
 
@@ -171,15 +152,42 @@ class UsernamePasswordRealm(var authExceptionThreadLocal: AuthExceptionThreadLoc
 
         return authorizationInfo
     }
+}
+
+/**
+ * Realm for username and password authentication
+ */
+class UsernamePasswordRealm(
+    var authExceptionThreadLocal: AuthExceptionThreadLocal,
+    authInfoAggregator: AuthInfoAggregator,
+) : BaseRealm(authInfoAggregator) {
+
+    override fun supports(token: AuthenticationToken?): Boolean {
+        return token != null && token is org.apache.shiro.authc.UsernamePasswordToken
+    }
+
+    override fun doGetAuthenticationInfo(token: AuthenticationToken): AuthenticationInfo {
+        var usernamePasswordToken = token as org.apache.shiro.authc.UsernamePasswordToken
+        var entityId: EntityIdentification? =
+            authInfoAggregator.entityExists(usernamePasswordToken.username, String(usernamePasswordToken.password))
+        entityId?.let {
+            return SimpleAuthenticationInfo(entityId, usernamePasswordToken.password, name)
+        } ?: run {
+            authExceptionThreadLocal.set(AuthcException(AuthErrorCode.ENTITY_NOT_EXISTED.name, null))
+            throw RuntimeException()
+        }
+    }
 
 }
 
 /**
  * Realm for token authentication
  */
-class TokenRealm(var authExceptionThreadLocal: AuthExceptionThreadLocal, var authInfoAggregator: AuthInfoAggregator) : AuthorizingRealm() {
+class TokenRealm(var authExceptionThreadLocal: AuthExceptionThreadLocal, authInfoAggregator: AuthInfoAggregator) :
+    BaseRealm(authInfoAggregator) {
 
     private val log = KotlinLogging.logger {}
+
     override fun supports(token: AuthenticationToken?): Boolean {
         return token != null && token is BearerToken
     }
@@ -199,21 +207,6 @@ class TokenRealm(var authExceptionThreadLocal: AuthExceptionThreadLocal, var aut
         }
     }
 
-
-    override fun doGetAuthorizationInfo(principals: PrincipalCollection): AuthorizationInfo {
-
-        var entityIdentification = principals.primaryPrincipal as EntityIdentification
-
-        val entityRoles = authInfoAggregator.getEntityRoles(entityIdentification)
-        val entityPermissions = authInfoAggregator.getEntityPermissions(entityIdentification)
-
-        val authorizationInfo = SimpleAuthorizationInfo()
-        authorizationInfo.roles = entityRoles.map { it.toString() }.toSet()
-        authorizationInfo.stringPermissions = entityPermissions.getPermissions().map { it.toString() }.toSet()
-
-        return authorizationInfo
-    }
-
     private fun getEntityIdFromToken(token: BearerToken): EntityIdentification {
 
         val tokenValue = token.token
@@ -229,7 +222,7 @@ class TokenRealm(var authExceptionThreadLocal: AuthExceptionThreadLocal, var aut
                 numberId = userUid.toLong()
             } catch (e: NumberFormatException) {
                 authExceptionThreadLocal.set(AuthcException(AuthErrorCode.TOKEN_INVALID.name, null))
-            throw RuntimeException()
+                throw RuntimeException()
             }
             log.debug { "Entity identification: $numberId" }
             return NumberEntityIdentification(numberId)

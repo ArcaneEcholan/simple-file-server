@@ -17,9 +17,12 @@ spring:
     password: ${datasource-password}
     schema: classpath:sql/schema.sql
     initialization-mode: always
-
   main:
     banner-mode: off
+
+
+server:
+  port: 8088
 
 logging:
   level:
@@ -27,14 +30,36 @@ logging:
     com.zaxxer.hikari: info
     sun.rmi: info
     org:
+      mybatis:
+        spring:
+          mapper:
+            ClassPathMapperScanner: info
+      hibernate:
+        validator:
+          internal:
+            engine: info
       springframework:
+        core:
+          env:
+            PropertySourcesPropertyResolver: info
+        jdbc:
+          datasource:
+            init:
+              ScriptUtils: info
+        beans:
+          factory:
+            support:
+              DefaultListableBeanFactory: info
+
+
         boot:
           autoconfigure:
             logging: info
+        context:
+          annotation:
+            ClassPathBeanDefinitionScanner: info
+
 
 mybatis-plus:
   global-config:
     banner: off
-
-server:
-  port: 8088

@@ -50,6 +50,7 @@ interface UserService {
     fun getUserByUsername(principal: String): UserPO?
     fun getUserVOById(principal: Serializable): UserVO?
     fun getUserById(id: Serializable): UserPO?
+    fun listAll(): List<UserVO>
 }
 
 @Service
@@ -76,6 +77,11 @@ class UserServiceImpl : UserService {
     }
 
     override fun getUserById(id: Serializable): UserPO? = userDao.getOne(QueryWrapper<UserPO>().eq("id", id), false)
+
+    override fun listAll(): List<UserVO> {
+        val list = userDao.list(QueryWrapper<UserPO>().select("id"))
+        list.map { it.id }.filterNotNull().map { getUserVOById(it) }.filterNotNull().let { return it }
+    }
 
     override fun getUserVOById(principal: Serializable): UserVO? {
         this.getUserById(principal)?.let {
