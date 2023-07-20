@@ -1,3 +1,5 @@
+import '@/router/componentHooks'
+
 import Vue from 'vue';
 
 import Cookies from 'js-cookie';
