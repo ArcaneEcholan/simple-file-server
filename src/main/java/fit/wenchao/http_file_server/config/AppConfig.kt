@@ -2,8 +2,10 @@ package fit.wenchao.http_file_server.config
 
 import fit.wenchao.http_file_server.constants.API_PREFIX
 import fit.wenchao.http_file_server.interceptor.ApiLogInterceptor
+import fit.wenchao.http_file_server.interceptor.AuthExceptionThreadLocal
 import fit.wenchao.http_file_server.interceptor.AuthcInterceptor
 import fit.wenchao.http_file_server.interceptor.PreflightInterceptor
+import fit.wenchao.http_file_server.service.AuthInfoAggregator
 import fit.wenchao.http_file_server.service.TokenRealm
 import fit.wenchao.http_file_server.service.UsernamePasswordRealm
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager
@@ -114,13 +116,13 @@ class ShiroConfig {
     // }
 
     @Bean
-    fun tokenRealm(): TokenRealm {
-        return TokenRealm()
+    fun tokenRealm(authExceptionThreadLocal: AuthExceptionThreadLocal, authInfoAggregator: AuthInfoAggregator): TokenRealm {
+        return TokenRealm(authExceptionThreadLocal, authInfoAggregator)
     }
 
     @Bean
-    fun usernamePasswordRealm(): UsernamePasswordRealm {
-        return UsernamePasswordRealm()
+    fun usernamePasswordRealm(authExceptionThreadLocal: AuthExceptionThreadLocal, authInfoAggregator: AuthInfoAggregator): UsernamePasswordRealm {
+        return UsernamePasswordRealm(authExceptionThreadLocal, authInfoAggregator)
     }
 
     @Bean

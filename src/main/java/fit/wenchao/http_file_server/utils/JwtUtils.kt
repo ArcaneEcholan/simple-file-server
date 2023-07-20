@@ -9,7 +9,6 @@ import fit.wenchao.http_file_server.utils.TimeUnit.MINUTE
 import fit.wenchao.http_file_server.utils.TimeUnit.SECOND
 import fit.wenchao.http_file_server.utils.TimeUnit.WEEK
 import io.jsonwebtoken.*
-import org.apache.commons.lang3.StringUtils
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -89,9 +88,6 @@ class JwtUtils : InitializingBean {
         }
 
         fun <T> getClaimFromJWT(token: String, claimName: String): T? {
-            if (StringUtils.isEmpty(token)) {
-                return null
-            }
             val claimsJws = verifySignature(token)
             val claims = claimsJws.body
             return claims[claimName] as? T

@@ -75,8 +75,19 @@ class AuthController {
             log.debug { "Authentication successfully, principal: ${principal.value()}" }
             val genToken = JwtUtils.genToken(principal.value(), EntityType.WEB_USER)
             return genToken
-        } catch (e: AuthcException) {
-            throw BackendException(e, null, RespCode.AUTH_FAILED)
+        }catch (e: AuthcException) {
+            if(e.message == AuthErrorCode.TOKEN_INVALID.name)
+                throw BackendException(e, null, RespCode.AUTH_FAILED)
+            else if(e.message == AuthErrorCode.TOKEN_EXPIRED.name)
+                throw BackendException(e, null, RespCode.TOKEN_EXPIRED)
+            else if(e.message == AuthErrorCode.UNSUPPORTED_TOKEN_TYPE.name)
+                throw BackendException(e, null, RespCode.TOKEN_INVALID)
+            else if(e.message == AuthErrorCode.ENTITY_NOT_EXISTED.name)
+                throw BackendException(e, null, RespCode.USER_NOT_FOUND)
+            else if(e.message == AuthErrorCode.AUTHC_ERROR.name)
+                throw BackendException(e, null, RespCode.AUTH_FAILED)
+            else
+                throw BackendException(e, null, RespCode.AUTH_FAILED)
         }
     }
 

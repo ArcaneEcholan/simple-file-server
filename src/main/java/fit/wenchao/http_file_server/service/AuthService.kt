@@ -1,14 +1,23 @@
 package fit.wenchao.http_file_server.service
 
+import fit.wenchao.http_file_server.interceptor.AuthExceptionThreadLocal
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.AuthenticationToken
 import org.apache.shiro.authc.BearerToken
 import org.apache.shiro.authc.UsernamePasswordToken
 import org.apache.shiro.mgt.SecurityManager
 import org.apache.shiro.util.ThreadContext
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
+enum class AuthErrorCode {
+    TOKEN_INVALID,
+    TOKEN_EXPIRED,
+    UNSUPPORTED_TOKEN_TYPE,
+    AUTHC_ERROR,
+    AUTHZ_ERROR,
+    ENTITY_NOT_AUTHCED,
+    ENTITY_NOT_EXISTED
+}
 
 open class AuthException(msg: String?, e: Throwable?) :RuntimeException(msg, e){
 }
@@ -27,9 +36,7 @@ interface AuthService {
 }
 
 @Service
-class AuthServiceImpl : AuthService {
-    @Autowired
-    lateinit var securityManager: SecurityManager
+class AuthServiceImpl(var authExceptionThreadLocal: AuthExceptionThreadLocal, var securityManager: SecurityManager) : AuthService {
     override fun authenticate(token: AuthToken): Entity {
         // bind security manager to thread context, so it can be access globally
         ThreadContext.bind(securityManager)
@@ -40,14 +47,17 @@ class AuthServiceImpl : AuthService {
         } else if (token.getTokenType() is UsernamePasswordTokenType) {
             shiroToken = UsernamePasswordToken(token.getPrincipal().value(), token.getCredential().value())
         } else {
-            throw AuthException("Unsupported token type", null)
+            throw AuthcException(AuthErrorCode.UNSUPPORTED_TOKEN_TYPE.name, null)
         }
+        authExceptionThreadLocal.set(null)
 
         // perform authentication
         try {
             subject.login(shiroToken)
         } catch (e: Exception) {
-            throw AuthcException("Authentication failed", e)
+            val get = authExceptionThreadLocal.get()
+            get?:throw AuthcException(AuthErrorCode.AUTHC_ERROR.name, e)
+            throw AuthcException( get.message, null)
         }
 
         val principal = subject.principal as EntityIdentification
@@ -61,16 +71,19 @@ class AuthServiceImpl : AuthService {
     override fun authorize(entity: Entity, permissionsOfUri: PermissionCollection) {
 
         if (!entity.authced()) {
-            throw AuthzException("Please authenticate the entity before authorization", null)
+            throw AuthzException(AuthErrorCode.ENTITY_NOT_AUTHCED.name, null)
         }
 
         val shiroPermissions = permissionsOfUri.getShiroPermissions()
 
         val subject = SecurityUtils.getSubject()
+        authExceptionThreadLocal.set(null)
         try {
             subject.checkPermissions(shiroPermissions)
         } catch (e: Exception) {
-            throw AuthzException("Authorization failed", e)
+            val get = authExceptionThreadLocal.get()
+            get?:throw AuthzException(AuthErrorCode.AUTHZ_ERROR.name, e)
+            throw AuthzException( get.message, null)
         }
     }
 

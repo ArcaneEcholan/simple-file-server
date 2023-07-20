@@ -10,18 +10,28 @@ import org.springframework.web.servlet.HandlerInterceptor
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
+@Component
+class AuthExceptionThreadLocal {
+    private val tl: ThreadLocal<Throwable> = ThreadLocal()
+    fun get(): Throwable? {
+        return tl.get()
+    }
+    fun set(e: Throwable?) {
+        return tl.set(e)
+    }
+}
 
-
-
+const val THREAD_LOCAL_AUTH_EXCEPTION = "THREAD_LOCAL_AUTH_EXCEPTION"
 
 @Component
 class AuthcInterceptor: HandlerInterceptor {
 
+
     private val log = KotlinLogging.logger {}
 
-    lateinit var authService: AuthService
+     var authService: AuthService
 
-    lateinit var threadAuthContext: ThreadAuthContext
+     var threadAuthContext: ThreadAuthContext
 
     constructor(
         authService: AuthService,
@@ -50,9 +60,23 @@ class AuthcInterceptor: HandlerInterceptor {
 
             return true
         } catch (e: AuthcException) {
-            throw BackendException(e, null, RespCode.AUTH_FAILED)
+            if(e.message == AuthErrorCode.TOKEN_INVALID.name)
+                throw BackendException(e, null, RespCode.AUTH_FAILED)
+            else if(e.message == AuthErrorCode.TOKEN_EXPIRED.name)
+                throw BackendException(e, null, RespCode.TOKEN_EXPIRED)
+            else if(e.message == AuthErrorCode.UNSUPPORTED_TOKEN_TYPE.name)
+                throw BackendException(e, null, RespCode.TOKEN_INVALID)
+            else if(e.message == AuthErrorCode.ENTITY_NOT_EXISTED.name)
+                throw BackendException(e, null, RespCode.USER_NOT_FOUND)
+            else if(e.message == AuthErrorCode.AUTHC_ERROR.name)
+                throw BackendException(e, null, RespCode.AUTH_FAILED)
+            else
+                throw BackendException(e, null, RespCode.AUTH_FAILED)
         }catch (e: AuthzException) {
-            throw BackendException(e, null, RespCode.PERMISSION_INADEQUATE)
+            if(e.message == AuthErrorCode.ENTITY_NOT_AUTHCED.name)
+                throw BackendException(e, null, RespCode.SERVER_ERROR)
+            else
+                throw BackendException(e, null, RespCode.PERMISSION_INADEQUATE)
         }
 
     }

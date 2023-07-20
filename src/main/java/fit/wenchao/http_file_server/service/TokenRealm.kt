@@ -6,9 +6,10 @@ import fit.wenchao.http_file_server.dao.po.RolePermissionPO
 import fit.wenchao.http_file_server.dao.po.UserPO
 import fit.wenchao.http_file_server.dao.po.UserRolePO
 import fit.wenchao.http_file_server.dao.repo.*
-import fit.wenchao.http_file_server.exception.BackendException
-import fit.wenchao.http_file_server.exception.RespCode
+import fit.wenchao.http_file_server.interceptor.AuthExceptionThreadLocal
 import fit.wenchao.http_file_server.utils.JwtUtils
+import io.jsonwebtoken.ExpiredJwtException
+import mu.KotlinLogging
 import org.apache.shiro.authc.AuthenticationInfo
 import org.apache.shiro.authc.AuthenticationToken
 import org.apache.shiro.authc.BearerToken
@@ -105,7 +106,7 @@ class AuthInfoAggregatorImpl : AuthInfoAggregator {
     override fun getEntityPermissions(id: EntityIdentification): PermissionCollection {
         val entityRoles = this.getEntityRoles(id)
         val isSuperAdmin = entityRoles.filter { it.toString() == "super-admin" }.size == 1
-        if(isSuperAdmin) {
+        if (isSuperAdmin) {
             return getAllPermissions()
         }
 
@@ -117,7 +118,7 @@ class AuthInfoAggregatorImpl : AuthInfoAggregator {
                         rolePermissionDao.list(QueryWrapper<RolePermissionPO>().eq("role_id", rolePO.id))
                             .mapNotNull { userRolePO ->
                                 permissionDao.getById(userRolePO.permissionId)
-                            }.mapNotNull { SimplePermission(it.name !!) }.toMutableList()
+                            }.mapNotNull { SimplePermission(it.name!!) }.toMutableList()
                     return@let PermissionCollectionImpl().apply { this.list.addAll(permsOfOneRole) }
                 } ?: PermissionCollectionImpl()
             permCollection.merge(perms)
@@ -126,8 +127,8 @@ class AuthInfoAggregatorImpl : AuthInfoAggregator {
         return permCollection
     }
 
- fun getAllPermissions(): PermissionCollection {
-        permissionDao.list().mapNotNull { SimplePermission(it.name !!) }.toMutableList().let {
+    fun getAllPermissions(): PermissionCollection {
+        permissionDao.list().mapNotNull { SimplePermission(it.name!!) }.toMutableList().let {
             return PermissionCollectionImpl().apply { this.list.addAll(it) }
         }
     }
@@ -137,10 +138,8 @@ class AuthInfoAggregatorImpl : AuthInfoAggregator {
 /**
  * Realm for username and password authentication
  */
-class UsernamePasswordRealm : AuthorizingRealm() {
+class UsernamePasswordRealm(var authExceptionThreadLocal: AuthExceptionThreadLocal, var authInfoAggregator: AuthInfoAggregator) : AuthorizingRealm() {
 
-    @Autowired
-    lateinit var authInfoAggregator: AuthInfoAggregator
 
     override fun supports(token: AuthenticationToken?): Boolean {
         return token != null && token is org.apache.shiro.authc.UsernamePasswordToken
@@ -152,7 +151,10 @@ class UsernamePasswordRealm : AuthorizingRealm() {
             authInfoAggregator.entityExists(usernamePasswordToken.username, String(usernamePasswordToken.password))
         entityId?.let {
             return SimpleAuthenticationInfo(entityId, usernamePasswordToken.password, name)
-        } ?: throw AuthcException("entity not exists", null)
+        } ?: run {
+            authExceptionThreadLocal.set(AuthcException(AuthErrorCode.ENTITY_NOT_EXISTED.name, null))
+            throw RuntimeException()
+        }
     }
 
     override fun doGetAuthorizationInfo(principals: PrincipalCollection): AuthorizationInfo {
@@ -175,11 +177,9 @@ class UsernamePasswordRealm : AuthorizingRealm() {
 /**
  * Realm for token authentication
  */
-class TokenRealm : AuthorizingRealm() {
+class TokenRealm(var authExceptionThreadLocal: AuthExceptionThreadLocal, var authInfoAggregator: AuthInfoAggregator) : AuthorizingRealm() {
 
-    @Autowired
-    lateinit var authInfoAggregator: AuthInfoAggregator
-
+    private val log = KotlinLogging.logger {}
     override fun supports(token: AuthenticationToken?): Boolean {
         return token != null && token is BearerToken
     }
@@ -187,31 +187,18 @@ class TokenRealm : AuthorizingRealm() {
     override fun doGetAuthenticationInfo(token: AuthenticationToken): AuthenticationInfo {
         var bearerToken = token as BearerToken
 
-        var entityId: EntityIdentification? = getEntityIdFromToken(bearerToken)
-        entityId?: throw AuthException("token invalid", null)
+        var entityId: EntityIdentification = getEntityIdFromToken(bearerToken)
 
-        entityId = authInfoAggregator.entityExists(entityId)
-        entityId?.let {
+        var entityId1 = authInfoAggregator.entityExists(entityId)
+        entityId1?.let {
+            log.debug { "Authentication passed, entityId: $entityId1" }
             return SimpleAuthenticationInfo(entityId, bearerToken.token, name)
-        } ?: throw AuthcException("entity not exists", null)
-    }
-
-    fun getEntityIdFromToken(token: BearerToken): EntityIdentification {
-
-        val tokenValue = token.token
-
-        val userUid = JwtUtils.getIdFromToken(tokenValue)
-        userUid ?: throw BackendException(null, RespCode.TOKEN_INVALID)
-
-        var toLong: Long? = null;
-        try {
-            toLong = userUid.toLong()
-        } catch (e: NumberFormatException) {
-            throw AuthException("entity identification invalid", e)
+        } ?: run {
+            authExceptionThreadLocal.set(AuthcException(AuthErrorCode.ENTITY_NOT_EXISTED.name, null))
+            throw RuntimeException()
         }
-
-        return NumberEntityIdentification(toLong)
     }
+
 
     override fun doGetAuthorizationInfo(principals: PrincipalCollection): AuthorizationInfo {
 
@@ -225,6 +212,31 @@ class TokenRealm : AuthorizingRealm() {
         authorizationInfo.stringPermissions = entityPermissions.getPermissions().map { it.toString() }.toSet()
 
         return authorizationInfo
+    }
+
+    private fun getEntityIdFromToken(token: BearerToken): EntityIdentification {
+
+        val tokenValue = token.token
+        try {
+            val userUid = JwtUtils.getIdFromToken(tokenValue)
+            userUid ?: run {
+                authExceptionThreadLocal.set(AuthcException(AuthErrorCode.AUTHC_ERROR.name, null))
+                throw RuntimeException()
+            }
+
+            var numberId: Long? = null;
+            try {
+                numberId = userUid.toLong()
+            } catch (e: NumberFormatException) {
+                authExceptionThreadLocal.set(AuthcException(AuthErrorCode.TOKEN_INVALID.name, null))
+            throw RuntimeException()
+            }
+            log.debug { "Entity identification: $numberId" }
+            return NumberEntityIdentification(numberId)
+        } catch (e: ExpiredJwtException) {
+            authExceptionThreadLocal.set(AuthcException(AuthErrorCode.TOKEN_EXPIRED.name, null))
+            throw RuntimeException()
+        }
     }
 }
 
