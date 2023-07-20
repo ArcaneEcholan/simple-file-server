@@ -101,7 +101,6 @@ class Client {
         })
     }
 
-
     // endregion
 }
 

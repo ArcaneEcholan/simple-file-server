@@ -11,6 +11,7 @@ import fit.wenchao.http_file_server.exception.RespCode
 import fit.wenchao.http_file_server.model.vo.FileInfo
 import fit.wenchao.http_file_server.model.vo.UploadFileInfo
 import fit.wenchao.http_file_server.rest.fileFilters.*
+import fit.wenchao.http_file_server.service.AuthLogin
 import fit.wenchao.http_file_server.service.FileService
 import fit.wenchao.http_file_server.service.ThreadAuthContext
 import fit.wenchao.http_file_server.service.UserAccessDirectoryService
@@ -116,7 +117,7 @@ class FileController(
         var root = userAccessDirectoryService.getUserAccessDirectory(entityId)
         return root
     }
-
+    @AuthLogin
     @GetMapping("/file-list")
     fun getFileList(@RequestParam optsMap: MutableMap<String, String>, @NotBlank path: String): ResponseEntity<JsonResult> {
 
@@ -146,6 +147,7 @@ class FileController(
         return ResponseEntityUtils.ok(JsonResult.ok(fileInfos))
     }
 
+    @AuthLogin
     @GetMapping("/file")
     fun downloadFile(
         @NotNull @NotBlank path: String
@@ -205,7 +207,7 @@ class FileController(
             })
     }
 
-
+    @AuthLogin
     @PostMapping("/file")
     fun uploadFile(
         @RequestPart("file-body") multipartFile: MultipartFile,

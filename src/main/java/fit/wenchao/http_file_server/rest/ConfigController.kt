@@ -8,6 +8,7 @@ import fit.wenchao.http_file_server.exception.BackendException
 import fit.wenchao.http_file_server.exception.JsonResult
 import fit.wenchao.http_file_server.exception.RespCode
 import fit.wenchao.http_file_server.model.ConfigPO
+import fit.wenchao.http_file_server.service.AuthLogin
 import fit.wenchao.http_file_server.service.PermissionRequired
 import fit.wenchao.http_file_server.utils.ExceptionUtils
 import fit.wenchao.http_file_server.utils.ResponseEntityUtils
@@ -28,6 +29,7 @@ class ConfigController {
     @Autowired
     lateinit var configFile: ConfigFile
 
+    @AuthLogin
     @PermissionRequired([PermissionConstants.SYSTEM_CONFIG])
     @GetMapping("/config/list")
     fun getConfigList(): ResponseEntity<JsonResult> {
@@ -52,7 +54,7 @@ class ConfigController {
 
         return ResponseEntityUtils.ok(JsonResult.ok(configPOList))
     }
-
+    @AuthLogin
     @PutMapping("/config")
     fun setConfigValue(@NotBlank key: String, @NotBlank value: String): ResponseEntity<JsonResult> {
         if ("max-upload-size" == key) {
@@ -79,7 +81,7 @@ class ConfigController {
 
         return ResponseEntityUtils.ok(JsonResult.ok())
     }
-
+    @AuthLogin
     @GetMapping("/config")
     fun getConfigValue(@NotBlank key: String): ResponseEntity<JsonResult> {
         val prop: String? = try {

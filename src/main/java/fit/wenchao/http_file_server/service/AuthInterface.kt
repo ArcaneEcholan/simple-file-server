@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
 import java.io.Serializable
 
+annotation class AuthLogin
 
 interface AuthToken {
     fun getPrincipal(): EntityPrincipal
@@ -152,7 +153,7 @@ class ThreadAuthContextImpl : ThreadAuthContext {
     }
 
     override fun getEntity(): Entity? {
-        return tl.get()[entityObjectKey]
+        return tl.get()?.get(entityObjectKey)
     }
 
 

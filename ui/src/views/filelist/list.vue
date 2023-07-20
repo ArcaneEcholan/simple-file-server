@@ -530,8 +530,10 @@ export default class FileListView extends Vue {
     }
 
     download(name) {
+
         var pathParam = this.encodeFilePathQueryCondition(name)
-        var location = `${new PageLocation().baseURL}/file?${pathParam}`
+
+        var location = `${new PageLocation().baseURL}/file?entity-token=${get_token()}&${pathParam}`
 
         console.log('download location: ' + location)
         window.location.href = location

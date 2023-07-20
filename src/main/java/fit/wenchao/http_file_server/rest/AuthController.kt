@@ -91,6 +91,7 @@ class AuthController {
         }
     }
 
+    @AuthLogin
     @GetMapping(GET_USER_INFO)
     fun getUserInfo(httpServletRequest: HttpServletRequest): Any {
         val entity: Entity = threadAuthContext.getEntity()!!
