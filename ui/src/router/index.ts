@@ -50,6 +50,7 @@ export const dynamicRoutes = [
                 component: () => import(`@/views/system_config/index.vue`),
                 meta: {
                     title: `SystemConfig`,
+                    breadcrumb: false
                 },
             },
         ],

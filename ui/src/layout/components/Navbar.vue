@@ -79,8 +79,6 @@ export default {
     components: {
         Breadcrumb,
         Hamburger,
-        ErrorLog,
-        SizeSelect,
     },
     computed: {
         ...mapGetters(['sidebar', 'avatar', 'device']),
