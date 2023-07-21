@@ -6,6 +6,8 @@ import fit.wenchao.http_file_server.dao.po.UserPO
 import fit.wenchao.http_file_server.dao.repo.PermissionDao
 import fit.wenchao.http_file_server.dao.repo.UserAccDirDao
 import fit.wenchao.http_file_server.dao.repo.UserDao
+import fit.wenchao.http_file_server.exception.BackendException
+import fit.wenchao.http_file_server.exception.RespCode
 import fit.wenchao.http_file_server.rest.PermissionVO
 import fit.wenchao.http_file_server.rest.UserVO
 import org.springframework.stereotype.Component
@@ -51,6 +53,7 @@ interface UserService {
     fun getUserVOById(principal: Serializable): UserVO?
     fun getUserById(id: Serializable): UserPO?
     fun listAll(): List<UserVO>
+     fun addUser(username: String, password: String): UserVO
 }
 
 @Service
@@ -86,6 +89,18 @@ class UserServiceImpl : UserService {
     override fun listAll(): List<UserVO> {
         val list = userDao.list(QueryWrapper<UserPO>().select("id"))
         list.map { it.id }.filterNotNull().map { getUserVOById(it) }.filterNotNull().let { return it }
+    }
+
+    override fun addUser(username: String, password: String): UserVO {
+        userDao.getOne(QueryWrapper<UserPO>().eq("username", username), false)?.let {
+            throw BackendException(null, RespCode.USER_EXISTS)
+        }
+        val userPO = UserPO().apply {
+            this.username = username
+            this.password = password
+        }
+        userDao.save(userPO)
+        return getUserVOById(userPO.id!!)!!
     }
 
     override fun getUserVOById(principal: Serializable): UserVO? {

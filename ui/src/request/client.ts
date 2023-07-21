@@ -126,6 +126,20 @@ class Client {
             }
         })
     }
+
+    static addUser(username: string , password: string , token: string) {
+        return request({
+            url: `/user`,
+            method: 'post',
+            data: {
+                username,
+                password
+            },
+            headers: {
+                'entity-token': token
+            }
+        })
+    }
 }
 
 export default Client

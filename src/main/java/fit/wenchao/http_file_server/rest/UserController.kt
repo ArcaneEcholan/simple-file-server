@@ -31,7 +31,20 @@ interface UserAccessDirectoryController {
             Any
 }
 
+
+class AddUserDTO {
+    @NotEmpty
+    var username: String? = null
+
+    @NotEmpty
+    var password: String? = null
+}
+
 interface UserController {
+
+    @PostMapping("/user")
+    @PermissionRequired([PermissionConstants.USER])
+    fun addUser(addUserDTO: AddUserDTO): UserVO
 
     @GetMapping("/users")
     @PermissionRequired([PermissionConstants.USER])
@@ -103,10 +116,14 @@ class UserAccessDirectoryControllerImpl(
 @Validated
 @RequestMapping(API_PREFIX)
 class UserControllerImpl(var userService: UserService) : UserController {
+    override fun addUser(@RequestBody addUserDTO: AddUserDTO): UserVO {
+        return userService.addUser(addUserDTO.username!!, addUserDTO.password!!)
+    }
 
     override fun getUsers(): List<UserVO> {
-      return userService.listAll()
+        return userService.listAll()
     }
+
 
     override fun getUserRoles(): List<RoleVO> {
         TODO("Not yet implemented")

@@ -11,5 +11,9 @@ const getters = {
     roles: (state: any) => state.user.roles,
     permission_routes: (state: any) => state.permission.routes,
     errorLogs: (state: any) => state.errorLog.logs,
+    debugView: (state) => {
+        // @ts-ignore
+        return state.development.debugView;
+    },
 }
 export default getters
