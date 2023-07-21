@@ -37,7 +37,9 @@ enum class RespCode(
     ROOT_PATH_CONFIG_ERROR("root path config error"),
     MAX_UPLOAD_SIZE_TOO_LARGE("max upload size should less then 2G"),
     DISK_SCAN_ERROR("disk scan error"), FILE_TYPE_ERROR("file type error"),
-    DIR_ANALYZE_NOT_SUPPORT("dir analyze not support");
+    DIR_ANALYZE_NOT_SUPPORT("dir analyze not support"),
+    USER_EXISTS("user exists")
+    ;
 
 
     fun getCode(): String {
