@@ -1,4 +1,4 @@
-import router, {whiteListRoutesFullPath} from '@/router/index'
+import router, {permissionFreeRoutesPathList} from '@/router/index'
 import store from '@/store/index'
 import NProgress from 'nprogress' // progress bar
 import 'nprogress/nprogress.css' // progress bar style
@@ -16,11 +16,11 @@ import {
 import {getPageTitle} from '@/ts/utils';
 import {ROUTE_PATHS} from "@/ts/consts/routerPathConstants";
 
-NProgress.configure({ showSpinner: false }) // NProgress Configuration
+NProgress.configure({showSpinner: false}) // NProgress Configuration
 
 const whiteList = ['/login', '/'] // no redirect whitelist
 
-NProgress.configure({ showSpinner: false }) // NProgress Configuration
+NProgress.configure({showSpinner: false}) // NProgress Configuration
 
 router.beforeEach(async (to, from, next) => {
     let logTag = 'router.beforeEach(): \n'
@@ -31,34 +31,39 @@ router.beforeEach(async (to, from, next) => {
     // set page title
     document.title = getPageTitle(to.meta?.title)
 
+    // if white list page, just pass
     let white_list_idx = whiteList.findIndex((elem) => elem === to.fullPath)
     if (white_list_idx !== -1) {
         next()
         return
     }
 
+    // if token is missing, to login page
     const token = get_token()
     if (token == null || token === '') {
         store.commit(USER_RESET_USER_STATE)
-        next({ path: '/login' })
+        next({path: '/login'})
         return
     }
 
-    // var login_info = get_lo_gin_info();
+    // if user info exists, just pass
     if (store.state.user.login_info) {
         console.log(logTag, 'user info exists, do not process menu')
         if (to.matched.length === 0) {
-            next({ path: to.fullPath })
+            next({path: to.fullPath})
         } else {
             next()
         }
         return
     }
 
-    // user info not exists, fetch from user
+    // user info not exists, fetch user info in order to decide
+    // the permitted routes for current user
     console.log(logTag, 'user info does not exist, fetch user info')
     Client.fetch_user_info(token).then((resp) => {
         let user_info = resp.data
+
+        // parse user info
         let login_info = parse_user_info_response(user_info)
 
         // store user info
@@ -69,19 +74,21 @@ router.beforeEach(async (to, from, next) => {
 
         // check if current user has access to target path
         let targetPath = to.path
-        let whiteListRoutes = whiteListRoutesFullPath
-        let userAllowedGuardedRoutes:string[] = login_info.menus.map((menu) => menu.path)
-        function getUnion(array1:any, array2:any): any[] {
+        let whiteListRoutes = permissionFreeRoutesPathList
+        let userAllowedRoutesOfDynamicRoutesPart: string[] = login_info.menus.map((menu) => menu.path)
+
+        function getUnion(array1: any, array2: any): any[] {
             const mergedArray = array1.concat(array2);
             return Array.from(new Set(mergedArray));
         }
-        let routesUserHasAccessTo: string[] = getUnion(whiteListRoutes, userAllowedGuardedRoutes)
+
+        let routesUserHasAccessTo: string[] = getUnion(whiteListRoutes, userAllowedRoutesOfDynamicRoutesPart)
 
         let hasAccess = routesUserHasAccessTo.findIndex((route) => route === targetPath) !== -1
 
-        if(hasAccess) {
+        if (hasAccess) {
             if (to.matched.length === 0) {
-                next({ path: to.fullPath })
+                next({path: to.fullPath})
             } else {
                 next()
             }

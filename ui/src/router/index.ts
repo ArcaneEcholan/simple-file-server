@@ -106,7 +106,7 @@ function gatherAllPaths(wholeRoutes: Array<RouteConfig>, parentPath = ''): strin
 
 console.log(logTag, gatherAllPaths(wholeRoutes))
 
-export let whiteListRoutesFullPath: string[] = gatherAllPaths(constantRoutes)
+export let permissionFreeRoutesPathList: string[] = gatherAllPaths(constantRoutes)
 
 export let routes_for_sidebar = []
 

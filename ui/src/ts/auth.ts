@@ -1,5 +1,5 @@
-import { PathBuilder } from '@/ts/utils'
-import { get_from_cookie, set_cookie } from '@/ts/utils'
+import {PathBuilder} from '@/ts/utils'
+import {get_from_cookie, set_cookie} from '@/ts/utils'
 import router, {
     constantRoutes,
     dynamicRoutes,
@@ -7,7 +7,7 @@ import router, {
     set_routes_for_sidebar,
 } from '@/router'
 import store from '@/store'
-import { PERM_PAGE_MAPPING } from '@/ts/consts/permissionConstants'
+import {PERM_PAGE_MAPPING} from '@/ts/consts/permissionConstants'
 
 const COOKIE_TOKEN_KEY = 'token_key'
 const COOKIE_REFRESH_TOKEN_KEY = 'refresh_token_key'
@@ -82,7 +82,7 @@ function is_admin(roles) {
 }
 
 // generate accessible routes map based on roles
-function generateRoutes(menus, is_admin) {
+function filterAllPermittedRoutesAgainstPermittedMenusFromDynamicRoutes(menus, is_admin) {
     let accessedRoutes
     if (is_admin) {
         accessedRoutes = dynamicRoutes || []
@@ -109,12 +109,12 @@ function get_child_absolute_path(child_relative_path, parent_absolute_path) {
 }
 
 function filterAsyncRoutes(dynamicRoutes, menus, p_path) {
-    const res:any[] = []
+    const res: any[] = []
 
     dynamicRoutes.forEach((route) => {
         let full_path = get_child_absolute_path(route.path, p_path)
 
-        const tmp = { ...route }
+        const tmp = {...route}
         if (hasPermission(menus, tmp, full_path)) {
             if (tmp.children) {
                 tmp.children = filterAsyncRoutes(tmp.children, menus, full_path)
@@ -155,13 +155,21 @@ function hasPermission(menus, route, routeFullPath) {
 
 export function processSideBarRoutes(login_info) {
     let apiTag = 'process_user_menu(): \n'
+
+    // menus user permitted
     let user_allow_menus = login_info.menus
+
+    // if the user is super admin
     let is_super_admin = is_admin(login_info.roles)
-    let permitRoutes = generateRoutes(user_allow_menus, is_super_admin)
 
+    // permitted routes in the dynamic routes part
+    let permittedRoutesOfDynamicRoutes = filterAllPermittedRoutesAgainstPermittedMenusFromDynamicRoutes(user_allow_menus, is_super_admin);
 
-    // render sidebar routes
-    set_routes_for_sidebar(constantRoutes.concat(permitRoutes))
+    // concat permission free routes with permitted dynamic routes
+    let userPermittedRoutes = constantRoutes.concat(permittedRoutesOfDynamicRoutes)
+
+    // give routes to sidebar
+    set_routes_for_sidebar(userPermittedRoutes)
 
     // //
     //
@@ -195,7 +203,7 @@ export function parse_user_info_response(user_info_resp) {
     // wrap all pages to menus
     let menus: any[] = []
     for (let page in pages) {
-        menus.push({ path: page })
+        menus.push({path: page})
     }
 
     return {
