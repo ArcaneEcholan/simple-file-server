@@ -1,13 +1,22 @@
 <template>
-    <div class="">
-        <el-input v-model="username"></el-input>
-        <el-input v-model="password"></el-input>
-        <el-button @click="onClickLogin">login</el-button>
+    <div style="height: 100%; background-color: #dfe4ea" class="flex flex-center">
+        <div style="width: 40%;">
+            <div class="shadow" style=" border-radius: 5px; padding: 10px; background-color: white;">
+                <div>Simple File Server</div>
+                <div style="margin-top: 10px;margin-bottom: 10px;">
+                    <el-input placeholder="account" v-model="username"></el-input>
+                </div>
+                <div style="margin-top: 10px;margin-bottom: 10px;">
+                    <el-input placeholder="password" v-model="password"></el-input>
+                </div>
+                <el-button type="primary" style="width: 100%;" @click="onClickLogin">login</el-button>
+            </div>
+        </div>
     </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import {Component, Vue} from 'vue-property-decorator'
 import Client from '@/request/client'
 import {
     get_token,
@@ -15,12 +24,13 @@ import {
     processSideBarRoutes,
 } from '@/ts/auth'
 import store from '@/store'
-import { USER_SET_LOGIN_INFO, USER_SET_TOKEN } from '@/store/modules/user'
-import { ROUTE_PATHS } from '@/ts/consts/routerPathConstants'
+import {USER_SET_LOGIN_INFO, USER_SET_TOKEN} from '@/store/modules/user'
+import {ROUTE_PATHS} from '@/ts/consts/routerPathConstants'
 import router from '@/router'
 
-import { Notification } from 'element-ui'
+import {Notification} from 'element-ui'
 import {isNavigationFailure, NavigationFailureType} from 'vue-router'
+
 @Component({})
 export default class LoginView extends Vue {
     username: string | null = null
@@ -77,4 +87,7 @@ export default class LoginView extends Vue {
     }
 }
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+@import '~@/styles/common-style.scss';
+
+</style>

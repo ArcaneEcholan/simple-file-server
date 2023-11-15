@@ -161,9 +161,9 @@ class JWTProperties {
     /**
      * token的过期时间, milli
      */
-    var tokenExpiration: Long = 30
+    var tokenExpiration: Long = 7
 
-    var expirationUnit: String = MINUTE
+    var expirationUnit: String = DAY
 
     /**
      * 生成token所需的密钥

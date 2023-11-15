@@ -490,9 +490,6 @@ export default class FileListView extends Vue {
                 Client
                     .upload(form, get_token())
                     .then((resp) => {
-                        console.log(resp)
-                    })
-                    .then((resp) => {
                         Message.success('upload successfully')
                         let querys = this.concatQuerys()
                         this.$router.push(`/filelist${querys}`)
@@ -501,6 +498,8 @@ export default class FileListView extends Vue {
                         const code = resp.code
                         if (code === 'FILE_ACCESS_DENIED') {
                             Message.error('FILE_ACCESS_DENIED')
+                        } else {
+                            Message.error("Unknown Error")
                         }
                     })
 
