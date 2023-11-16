@@ -115,10 +115,10 @@
 <script lang="ts">
 import readableDisplay from '@/views/common/readable-display.vue'
 import * as config_api from '@/api/config.js'
-import { Message, Notification } from 'element-ui'
-import { PageLocation } from '@/ts/dynamicLocation'
+import {Message, Notification} from 'element-ui'
+import {PageLocation} from '@/ts/dynamicLocation'
 import * as FILE_CONSTS from '@/ts/consts/fileConstants'
-import { Component, Vue, Watch } from 'vue-property-decorator'
+import {Component, Vue, Watch} from 'vue-property-decorator'
 import Client from "@/request/client";
 import {get_token} from "@/ts/auth";
 
@@ -405,7 +405,7 @@ export default class FileListView extends Vue {
         }
         const queryString = `path=${this.path}&${this.concatSortQuerys()}`
 
-            Client.getFileList(queryString, get_token())
+        Client.getFileList(queryString, get_token())
             .then((resp) => {
                 var filelist = resp.data
                 this.filelist = filelist
@@ -495,11 +495,8 @@ export default class FileListView extends Vue {
                         this.$router.push(`/filelist${querys}`)
                     })
                     .catch((resp) => {
-                        const code = resp.code
-                        if (code === 'FILE_ACCESS_DENIED') {
-                            Message.error('FILE_ACCESS_DENIED')
-                        } else {
-                            Message.error("Unknown Error")
+                        if (resp.code == null) {
+                            Message.error("App Error: " + resp.message)
                         }
                     })
 

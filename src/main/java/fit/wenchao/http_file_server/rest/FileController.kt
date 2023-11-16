@@ -280,7 +280,7 @@ class FileController(
         // check if file exists already
         val exists = Files.exists(uploadFilePath)
         if (exists) {
-            throw FileAlreadyExistsException(uploadFilePath.toString())
+            throw BackendException(null ,"File Exists", "FILE_EXISTS");
         }
         try {
             // copy file from multipart

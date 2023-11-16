@@ -7,89 +7,101 @@
  *
  * 3. Add response interceptor to handle some global response codes
  */
- import axios from 'axios';
- import { Message } from 'element-ui';
- import { PageLocation } from '@/ts/dynamicLocation';
- import globalHandledRespCodes, {
-     SUCCESS,
- } from '@/ts/GlobalHandledResponseCode';
+import axios from 'axios';
+import {Message, MessageBox, Notification} from 'element-ui';
+import {PageLocation} from '@/ts/dynamicLocation';
+import {SUCCESS,} from '@/ts/GlobalHandledResponseCode';
+import store from "@/store";
+import {USER_LOGOUT} from "@/store/modules/user";
 
- // create an axios instance
- const service = axios.create({
-     baseURL: new PageLocation().baseURL, // url = base url + request url
-     // withCredentials: true, // send cookies when cross-domain requests
-     timeout: 0, // request timeout
- });
+// create an axios instance
+const service = axios.create({
+    baseURL: new PageLocation().baseURL, // url = base url + request url
+    // withCredentials: true, // send cookies when cross-domain requests
+    timeout: 0, // request timeout
+});
 
- // request interceptor
- service.interceptors.request.use(
-     (config) => {
-         let logtag = `Network Request: =====> ${config.url}\n`;
-         console.log(logtag, config);
-         return config;
-     },
-     (error) => {
-         // do something with request error
-         console.log(error); // for debug
-         return Promise.reject(error);
-     },
- );
+// request interceptor
+service.interceptors.request.use(
+    (config) => {
+        let logtag = `Network Request: =====> ${config.url}\n`;
+        console.log(logtag, config);
+        return config;
+    },
+    (error) => {
+        // do something with request error
+        console.log(error); // for debug
+        return Promise.reject(error);
+    },
+);
 
- // response interceptor
- service.interceptors.response.use(
-     /**
-      * If you want to get http information such as headers or status
-      * Please return  response => response
-      */
+let tokenProblem = () => {
+    MessageBox.confirm(
+        'Your login credential is invalid, please login again',
+        'Warning',
+        {
+            confirmButtonText: 'OK',
+            type: 'warning',
+        },
+    ).then(() => {
+        store.commit(USER_LOGOUT);
+    });
+};
 
-     /**
-      * Determine the request status by custom code
-      * Here is just an example
-      * You can also judge the status by HTTP Status Code
-      */
-     (response) => {
-         /**
-          * {
-          *      code: "",
-          *      data: {},
-          *      msg: ""
-          * }
-          */
-         const res = response.data;
-         let relativeUrl = response.config.url!.substring(
-             response.config.baseURL!.length,
-         );
-         let logtag = `Network Response: <==== ${relativeUrl}\n`;
-         console.log(logtag, res);
-         let code = res.code;
-         let msg = res.msg
+function logResponse(httpResponse) {
+    const res = httpResponse.data;
+    let relativeUrl = httpResponse.config.url!.substring(
+        httpResponse.config.baseURL!.length,
+    );
+    let logtag = `Network Response: <==== ${relativeUrl}\n`;
+    console.log(logtag, res);
+}
 
-         // success
-         if (code === SUCCESS) {
-             return res;
-         }
+// response interceptor
+service.interceptors.response.use(
+    /**
+     * If you want to get http information such as headers or status
+     * Please return  response => response
+     */
 
-         // if blob, return the blob to specific request "then" handler for downloading
-         if (res.code == undefined) {
-             return response;
-         }
+    /**
+     * Determine the request status by custom code
+     * Here is just an example
+     * You can also judge the status by HTTP Status Code
+     */
+    (response) => {
+        logResponse(response)
 
-         // handle global error
-         globalHandledRespCodes.handle(code, msg);
+        const res = response.data;
+        let code = res.code;
+        let msg = res.msg
 
-         // give a chance to handle error by specific request "then" handler
-         return Promise.reject(res);
-     },
-     (error) => {
-         // 统一处理网络错误
-         Message({
-             message: `无法连接服务器(${error.message})`,
-             type: 'error',
-             duration: 2 * 1000,
-         });
-         return Promise.reject();
-     },
- );
+        // success
+        if (code === SUCCESS) {
+            return res;
+        }
 
- export default service;
+        // if blob, return the blob to specific request "then" handler for downloading
+        if (res.code == null) {
+            return response;
+        }
+
+        if (code === 'TOKEN_INVALID' || code === 'TOKEN_EXPIRED') {
+            tokenProblem();
+        } else {
+            Message.error(code + ":" + msg);
+        }
+        return Promise.reject(res);
+    },
+    (error) => {
+        Message({
+            message: `无法连接服务器(${error.message})`,
+            type: 'error',
+            duration: 2 * 1000,
+        });
+        return Promise.reject();
+    },
+);
+
+export default service;
 

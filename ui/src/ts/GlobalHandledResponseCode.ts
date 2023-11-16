@@ -44,11 +44,12 @@ class GlobalHandledRespCode {
     }
 
     handle(code: string, msg: string) {
-        if (this.codeHandlerMapping[code] != null) {
-            this.codeHandlerMapping[code](code, msg);
-        } else {
-            Notification.error(code);
-        }
+        // if (this.codeHandlerMapping[code] != null) {
+        //     this.codeHandlerMapping[code](code, msg);
+        // }
+        // else {
+        //     Notification.error(code);
+        // }
     }
 
     isGlobalHandled(code: string): boolean {

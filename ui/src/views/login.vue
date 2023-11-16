@@ -38,6 +38,7 @@ export default class LoginView extends Vue {
     loading = false
 
     onClickLogin() {
+
         if (this.username != null && this.password != null) {
             Client.login(this.username, this.password)
                 .then((resp) => {
